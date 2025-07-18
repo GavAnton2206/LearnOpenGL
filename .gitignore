@@ -1039,6 +1039,8 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
+.vs/LearnOpenGL/v17/ipch/AutoPCH/b11e27c15f89f3b9/MAIN.ipch
+
 # Raspberry Pi Pico Object file
 *.uf2
 # Raspberry Pi Pico disassembler file
