@@ -3,6 +3,8 @@
 
 #include <random>
 #include <iostream>
+#include <fstream>
+#include <string>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
@@ -10,29 +12,26 @@ void processInput(GLFWwindow* window);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-const char* vertexShaderSource = "#version 330 core\n"
-"layout (location = 0) in vec3 aPos;\n"
-"void main()\n"
-"{\n"
-"   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-"}\0";
-
-const char* fragmentShaderSource = "#version 330 core\n"
-"out vec4 FragColor;\n"
-"void main()\n"
-"{\n"
-"   FragColor = vec4(111.0f/255.0f, 45.0f/255.0f, 168.0f/255.0f, 1.0f);\n"
-"}\n\0";
-
-const char* fragmentYShaderSource = "#version 330 core\n"
-"out vec4 FragColor;\n"
-"void main()\n"
-"{\n"
-"   FragColor = vec4(255.0f/255.0f, 255.0f/255.0f, 0.0f/255.0f, 1.0f);\n"
-"}\n\0";
+const std::string vertexShaderSourceFile = "VertexShader.vert";
+const std::string fragmentShaderSourceFile = "FragmentShader.frag";
 
 double random() {
 	return (double)rand() / (double)RAND_MAX;
+}
+
+std::string LoadShaderAsString(const std::string& filename) {
+	std::string result = "";
+	std::string line = "";
+	std::ifstream myFile(filename.c_str());
+
+	if (myFile.is_open()) {
+		while (std::getline(myFile, line)) {
+			result += line + '\n';
+		}
+		myFile.close();
+	}
+
+	return result;
 }
 
 int main() {
@@ -64,10 +63,18 @@ int main() {
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	// ---------------------------------
+	// shaders file translation
+	std::string vertexShaderSource = LoadShaderAsString(vertexShaderSourceFile);
+	const char* vertexShaderSource_C = vertexShaderSource.c_str();
+
+	std::string fragmentShaderSource = LoadShaderAsString(fragmentShaderSourceFile);
+	const char* fragmentShaderSource_C = fragmentShaderSource.c_str();
+
+	// ---------------------------------
 	// vertex shader
 	unsigned int vertexShader;
 	vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+	glShaderSource(vertexShader, 1, &vertexShaderSource_C, NULL);
 	glCompileShader(vertexShader);
 
 	int  success;
@@ -82,26 +89,13 @@ int main() {
 	// fragment shader 
 	unsigned int fragmentShader;
 	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+	glShaderSource(fragmentShader, 1, &(fragmentShaderSource_C), NULL);
 	glCompileShader(fragmentShader);
 
 	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
 	if (!success)
 	{
 		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-	}
-
-	// yellow fragment shader
-	unsigned int fragmentShaderY;
-	fragmentShaderY = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShaderY, 1, &fragmentYShaderSource, NULL);
-	glCompileShader(fragmentShaderY);
-
-	glGetShaderiv(fragmentShaderY, GL_COMPILE_STATUS, &success);
-	if (!success)
-	{
-		glGetShaderInfoLog(fragmentShaderY, 512, NULL, infoLog);
 		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
 	}
 
@@ -118,22 +112,6 @@ int main() {
 		std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
 	}
 	glDeleteShader(fragmentShader);
-
-	// link shaders Y
-	unsigned int shaderProgramY;
-	shaderProgramY = glCreateProgram();
-	glAttachShader(shaderProgramY, vertexShader);
-	glAttachShader(shaderProgramY, fragmentShaderY);
-	glLinkProgram(shaderProgramY);
-
-	glGetProgramiv(shaderProgramY, GL_LINK_STATUS, &success);
-	if (!success) {
-		glGetProgramInfoLog(shaderProgramY, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-	}
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShaderY);
-
 
 	// ---------------------------------
 	// vertices
@@ -181,10 +159,13 @@ int main() {
 
 		glUseProgram(shaderProgram);
 
+		float timeValue = glfwGetTime();
+		float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
+		int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
+		glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+
 		glBindVertexArray(VAOs[0]);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
-
-		glUseProgram(shaderProgramY);
 
 		glBindVertexArray(VAOs[1]);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
