@@ -1,9 +1,11 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include "Shader.cpp"
+#include "shader.h"
+
 #include <random>
 #include <iostream>
-#include <fstream>
 #include <string>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -12,26 +14,8 @@ void processInput(GLFWwindow* window);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-const std::string vertexShaderSourceFile = "VertexShader.vert";
-const std::string fragmentShaderSourceFile = "FragmentShader.frag";
-
 double random() {
 	return (double)rand() / (double)RAND_MAX;
-}
-
-std::string LoadShaderAsString(const std::string& filename) {
-	std::string result = "";
-	std::string line = "";
-	std::ifstream myFile(filename.c_str());
-
-	if (myFile.is_open()) {
-		while (std::getline(myFile, line)) {
-			result += line + '\n';
-		}
-		myFile.close();
-	}
-
-	return result;
 }
 
 int main() {
@@ -64,54 +48,18 @@ int main() {
 
 	// ---------------------------------
 	// shaders file translation
-	std::string vertexShaderSource = LoadShaderAsString(vertexShaderSourceFile);
-	const char* vertexShaderSource_C = vertexShaderSource.c_str();
+	Shader shader("shaders/VertexShader.vert", "shaders/FragmentShader.frag");
 
-	std::string fragmentShaderSource = LoadShaderAsString(fragmentShaderSourceFile);
-	const char* fragmentShaderSource_C = fragmentShaderSource.c_str();
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
 
-	// ---------------------------------
-	// vertex shader
-	unsigned int vertexShader;
-	vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertexShader, 1, &vertexShaderSource_C, NULL);
-	glCompileShader(vertexShader);
-
-	int  success;
-	char infoLog[512];
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-	if (!success)
-	{
-		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-	}
-
-	// fragment shader 
-	unsigned int fragmentShader;
-	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &(fragmentShaderSource_C), NULL);
-	glCompileShader(fragmentShader);
-
-	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-	if (!success)
-	{
-		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-	}
-
-	// link shaders
-	unsigned int shaderProgram;
-	shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glLinkProgram(shaderProgram);
-
-	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-	if (!success) {
-		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-	}
-	glDeleteShader(fragmentShader);
+	// --------------------------------
+	// texture
+	float texCoords[] = {
+		0.0f, 0.0f,  // lower-left corner  
+		1.0f, 0.0f,  // lower-right corner
+		0.5f, 1.0f   // top-center corner
+	};
 
 	// ---------------------------------
 	// vertices
@@ -123,8 +71,8 @@ int main() {
 	};
 
 	unsigned int VBO, VAO;
-	glGenVertexArrays(2, &VAO);
-	glGenBuffers(2, &VBO);
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
 
 	glBindVertexArray(VAO);
 	
@@ -137,8 +85,6 @@ int main() {
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
-	glUseProgram(shaderProgram);
-
 	// --------------------------------------------------------------------------
 	while (!glfwWindowShouldClose(window)) 
 	{ 
@@ -147,6 +93,8 @@ int main() {
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
+		//shader.setFloat("xOffset", 0.0f);
+		shader.use();
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 
@@ -155,7 +103,6 @@ int main() {
 	}
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
-	glDeleteProgram(shaderProgram);
 
 	glfwTerminate();
 	return 0;

@@ -24,13 +24,21 @@
     <ClCompile Include="Indie.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Shader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="FragmentShader.frag">
+    <None Include="shaders\FragmentShader.frag">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="VertexShader.vert">
+    <None Include="shaders\VertexShader.vert">
       <Filter>Source Files</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="shader.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
