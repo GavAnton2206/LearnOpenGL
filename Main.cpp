@@ -125,6 +125,8 @@ int main() {
 
 		glBindTexture(GL_TEXTURE_2D, texture);
 
+		float randVal = (rand() % 100) / 100.0;
+		shader.setFloat("randomValue", randVal);
 		shader.use();
 
 		glBindVertexArray(VAO);

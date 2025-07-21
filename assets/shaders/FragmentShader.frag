@@ -5,8 +5,10 @@ in vec3 ourColor;
 in vec2 texCoord;
 
 uniform sampler2D texture;
+uniform float randomValue;
 
 void main()
 {
     FragColor = texture(texture, texCoord);
+    FragColor.t = randomValue;
 }
