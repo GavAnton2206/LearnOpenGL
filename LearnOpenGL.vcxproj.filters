@@ -45,7 +45,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="assets\texture\container.jpg">
+    <Image Include="assets\textures\container.jpg">
       <Filter>Source Files</Filter>
     </Image>
   </ItemGroup>
