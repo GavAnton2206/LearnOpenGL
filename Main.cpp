@@ -10,10 +10,14 @@
 #include <string>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void processInput(GLFWwindow* window);
+void processInput(GLFWwindow* window, Shader& shader);
 
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
+
+bool isUpPressed = false;
+bool isDownPressed = false;
+float mix = 0.2f;
 
 double random() {
 	return (double)rand() / (double)RAND_MAX;
@@ -53,16 +57,20 @@ int main() {
 
 	// --------------------------------
 	// texture
-	unsigned int texture;
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
+	unsigned int texture1, texture2;
+	glGenTextures(1, &texture1);
+	glBindTexture(GL_TEXTURE_2D, texture1);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	glGenTextures(1, &texture1);
+	glBindTexture(GL_TEXTURE_2D, texture1);
 
 	int width, height, nrChannels;
+	stbi_set_flip_vertically_on_load(true);
 	unsigned char* data = stbi_load("assets/textures/container.jpg", &width, &height, &nrChannels, 0);
 
 	if (data)
@@ -76,6 +84,29 @@ int main() {
 	}
 	stbi_image_free(data);
 
+	glGenTextures(1, &texture2);
+	glBindTexture(GL_TEXTURE_2D, texture2);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	data = stbi_load("assets/textures/awesomeface.png", &width, &height, &nrChannels, 0);
+	if (data)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	stbi_image_free(data);
+
+	shader.use();
+	//float randVal = (rand() % 100) / 100.0;
+	//shader.setFloat("randomValue", randVal);
+	shader.setInt("texture1", 0);
+	shader.setInt("texture2", 1);
+	shader.setFloat("mix", mix);
+
 	//float borderColor[] = { 1.0f, 1.0f, 0.0f, 1.0f };
 	//glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
@@ -83,10 +114,10 @@ int main() {
 	// vertices
 
 	float vertices[] = {
-		0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, // top left 
-		0.5f,  -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, // bottom right
-		-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // bottom left
-		-0.5f, 0.5f,  0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, // bottom left
+		0.5f,  0.5f,  0.0f,		1.0f, 0.0f, 0.0f,	2.0f, 2.0f, // top left 
+		0.5f,  -0.5f, 0.0f,		0.0f, 1.0f, 0.0f,	2.0f, 0.0f, // bottom right
+		-0.5f, -0.5f, 0.0f,		0.0f, 0.0f, 1.0f,	0.0f, 0.0f, // bottom left
+		-0.5f, 0.5f,  0.0f,		1.0f, 1.0f, 0.0f,	0.0f, 2.0f, // bottom left
 	};
 	unsigned int indices[] = {
 		0, 1, 3,
@@ -118,17 +149,17 @@ int main() {
 	// --------------------------------------------------------------------------
 	while (!glfwWindowShouldClose(window)) 
 	{ 
-		processInput(window);
+		processInput(window, shader);
 
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
+		
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture1);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, texture2);
 
-		glBindTexture(GL_TEXTURE_2D, texture);
-
-		float randVal = (rand() % 100) / 100.0;
-		shader.setFloat("randomValue", randVal);
 		shader.use();
-
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
@@ -142,8 +173,36 @@ int main() {
 	return 0;
 }
 
-void processInput(GLFWwindow* window)
+void processInput(GLFWwindow* window, Shader& shader)
 {
+	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+		if (!isUpPressed) {
+			isUpPressed = true;
+			mix += 0.1f;
+			if (mix > 1)
+				mix = 1;
+			shader.setFloat("mix", mix);
+			shader.use();
+		}
+	}
+	else {
+		isUpPressed = false;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+		if (!isDownPressed) {
+			isDownPressed = true;
+			mix -= 0.1f;
+			if (mix < 0)
+				mix = 0;
+			shader.setFloat("mix", mix);
+			shader.use();
+		}
+	}
+	else {
+		isDownPressed = false;
+	}
+
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 }

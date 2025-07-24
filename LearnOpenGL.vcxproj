@@ -167,6 +167,7 @@
     <ClInclude Include="external\stb_image.h" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="assets\textures\awesomeface.png" />
     <Image Include="assets\textures\container.jpg" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
