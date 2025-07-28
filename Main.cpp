@@ -15,21 +15,48 @@
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window, Shader& shader);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 1920;
+const unsigned int SCR_HEIGHT = 1080;
 
+// Input
+// Keys
 bool isUpPressed = false;
 bool isDownPressed = false;
 bool isLeftPressed = false;
 bool isRightPressed = false;
+bool isWPressed = false;
+bool isSPressed = false;
+bool isAPressed = false;
+bool isDPressed = false;
+// Mouse
+double lastX = 400, lastY = 300;
+bool firstMouse = true;
+
+// Settings
 float mix = 0.2f;
-float rotationSpeed = glm::radians(50.0f);
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
+
+// Movement
+const float cameraSpeed = 4.0f;
+const float sensitivity = 0.1f;
+float rotationSpeed = glm::radians(50.0f); // Cube rotation
 float currentRotation = 0.0f;
 float lastRotationTime = 0.0f;
+float yaw = -90.0f; // Camera rotation
+float pitch = 0.0f;
 
-double random() {
-	return (double)rand() / (double)RAND_MAX;
+// Camera
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+float fov = 45.0f;
+
+double random(float randomMax = 1.0f) {
+	return randomMax * (double)rand() / (double)RAND_MAX;
 }
 
 int main() {
@@ -40,7 +67,7 @@ int main() {
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	//glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); 
 
-	//glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); -> borderless
+	//glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); // -> borderless
 	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
 	if (window == NULL)
 	{
@@ -51,6 +78,9 @@ int main() {
 
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback); // resizing changes gl viewport
+	glfwSetCursorPosCallback(window, mouse_callback);
+	glfwSetScrollCallback(window, scroll_callback);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
@@ -197,16 +227,18 @@ int main() {
 	// ----------------------------
 	// cubes
 	glm::vec3 cubePositions[] = {
-		glm::vec3(0.0f,  0.0f,  0.0f),
 		glm::vec3(2.0f,  5.0f, -15.0f),
+		glm::vec3(0.0f,  0.0f,  0.0f),
 		glm::vec3(-1.5f, -2.2f, -2.5f),
-		glm::vec3(-3.8f, -2.0f, -12.3f),
-		glm::vec3(2.4f, -0.4f, -3.5f),
+		glm::vec3(-6.0f, -2.0f, -12.3f),
 		glm::vec3(-1.7f,  3.0f, -7.5f),
+		glm::vec3(2.4f, -0.4f, -3.5f),
 		glm::vec3(1.3f, -2.0f, -2.5f),
-		glm::vec3(1.5f,  2.0f, -2.5f),
 		glm::vec3(1.5f,  0.2f, -1.5f),
-		glm::vec3(-1.3f,  1.0f, -1.5f)
+		glm::vec3(1.5f,  2.0f, -2.5f),
+		glm::vec3(-1.3f,  1.0f, -1.5f),
+		glm::vec3(-4.3f,  1.0f, -3.5f),
+		glm::vec3(-3.0f,  4.0f, -2.0f),
 	};
 
 	glEnable(GL_DEPTH_TEST);
@@ -216,21 +248,20 @@ int main() {
 	{ 
 		processInput(window, shader);
 
+		// settings
+		float currentFrame = glfwGetTime();
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
+
 		// background color
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// matrices
-		glm::mat4 model = glm::mat4(1.0f);
-		glm::mat4 view = glm::mat4(1.0f);
-		glm::mat4 projection = glm::mat4(1.0f);
+		glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+		glm::mat4 projection = glm::perspective(glm::radians(fov), 1920.0f / 1080.0f, 0.1f, 100.0f);
 
-		model = glm::rotate(model, currentRotation + ((float)glfwGetTime() - lastRotationTime) * rotationSpeed, glm::vec3(0.5f, 1.0f, 0.0f));
-		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-		projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-
-		unsigned int viewLoc = glGetUniformLocation(shader.ID, "view");
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+		shader.setMat4("view", view);
 		shader.setMat4("projection", projection);
 
 		// texture 1 and texture 2
@@ -242,12 +273,17 @@ int main() {
 
 		// usage
 		glBindVertexArray(VAO);
-		for (unsigned int i = 0; i < 10; i++)
+		for (unsigned int i = 0; i < sizeof(cubePositions)/sizeof(cubePositions[0]); i++)
 		{
 			glm::mat4 model = glm::mat4(1.0f);
 			model = glm::translate(model, cubePositions[i]);
 			float angle = 20.0f * i;
-			model = glm::rotate(model, glm::radians(angle) + currentRotation + rotationSpeed * ((float)glfwGetTime() - lastRotationTime), glm::vec3(1.0f, 0.3f, 0.5f));
+			if ((i - 1) % 2 == 0) {
+				model = glm::rotate(model, glm::radians(angle) + currentRotation + rotationSpeed * ((float)glfwGetTime() - lastRotationTime), glm::vec3(1.0f, 0.3f, 0.5f));
+			}
+			else {
+				model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+			}
 			shader.setMat4("model", model);
 
 			glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -265,6 +301,8 @@ int main() {
 
 void processInput(GLFWwindow* window, Shader& shader)
 {
+	float curSpeed = cameraSpeed * deltaTime;
+
 	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
 		if (!isUpPressed) {
 			isUpPressed = true;
@@ -321,8 +359,88 @@ void processInput(GLFWwindow* window, Shader& shader)
 		isRightPressed = false;
 	}
 
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+		cameraPos += curSpeed * cameraFront;
+		if (!isWPressed) {
+			isWPressed = true;
+		}
+	}
+	else {
+		isWPressed = false;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+		cameraPos -= curSpeed * cameraFront;
+		if (!isSPressed) {
+			isSPressed = true;
+		}
+	}
+	else {
+		isSPressed = false;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * curSpeed;
+		if (!isAPressed) {
+			isAPressed = true;
+		}
+	}
+	else {
+		isAPressed = false;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * curSpeed;
+		if (!isDPressed) {
+			isDPressed = true;
+		}
+	}
+	else {
+		isDPressed = false;
+	}
+
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
+}
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+	if (firstMouse)
+	{
+		lastX = xpos;
+		lastY = ypos;
+		firstMouse = false;
+	}
+
+	float xoffset = xpos - lastX;
+	float yoffset = - (ypos - lastY);
+	lastX = xpos;
+	lastY = ypos;
+
+	xoffset *= sensitivity;
+	yoffset *= sensitivity;
+
+	yaw += xoffset;
+	pitch += yoffset;
+
+	if (pitch > 89.0f)
+		pitch = 89.0f;
+	if (pitch < -89.0f)
+		pitch = -89.0f;
+
+	glm::vec3 direction;
+	direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+	direction.y = sin(glm::radians(pitch));
+	direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+	cameraFront = glm::normalize(direction);
+}
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+	fov -= (float)yoffset;
+	if (fov < 1.0f)
+		fov = 1.0f;
+	if (fov > 45.0f)
+		fov = 45.0f;
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
