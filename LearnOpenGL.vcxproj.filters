@@ -36,6 +36,8 @@
     <None Include="assets\shaders\lit\VertexShader.vert" />
     <None Include="assets\shaders\lighting\FragmentShader.frag" />
     <None Include="assets\shaders\lighting\VertexShader.vert" />
+    <None Include="assets\shaders\gourand\FragmentShader.frag" />
+    <None Include="assets\shaders\gourand\VertexShader.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="external\stb_image.h">

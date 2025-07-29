@@ -158,12 +158,14 @@
     <ClCompile Include="external\stb_image.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="assets\shaders\gourand\FragmentShader.frag" />
     <None Include="assets\shaders\lighting\FragmentShader.frag" />
     <None Include="assets\shaders\lit\FragmentShader.frag" />
     <None Include="assets\shaders\unlit\FragmentShader.frag" />
     <None Include="assets\shaders\unlit\VertexShader.vert" />
     <None Include="assets\shaders\lit\VertexShader.vert" />
     <None Include="assets\shaders\lighting\VertexShader.vert" />
+    <None Include="assets\shaders\gourand\VertexShader.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h" />
