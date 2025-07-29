@@ -26,12 +26,16 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="assets\shaders\FragmentShader.frag">
+    <None Include="assets\shaders\unlit\FragmentShader.frag">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="assets\shaders\VertexShader.vert">
+    <None Include="assets\shaders\unlit\VertexShader.vert">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="assets\shaders\lit\FragmentShader.frag" />
+    <None Include="assets\shaders\lit\VertexShader.vert" />
+    <None Include="assets\shaders\lighting\FragmentShader.frag" />
+    <None Include="assets\shaders\lighting\VertexShader.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="external\stb_image.h">
