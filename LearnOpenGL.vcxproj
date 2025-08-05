@@ -24,6 +24,7 @@
     <ProjectGuid>{0cf7dca3-3909-4b63-bb97-6c9e8b4a9944}</ProjectGuid>
     <RootNamespace>LearnOpenGL</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>OpenGLGame</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -71,26 +72,26 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);C:\Anton\Dev\Essentials\C++\OpenGL\GLFW\Include;C:\Anton\Dev\Essentials\C++\OpenGL\GLAD\include</IncludePath>
-    <LibraryPath>C:\Anton\Dev\Essentials\C++\OpenGL\GLFW\Libs;$(ProjectDir)lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);D:\Libs\C++\OpenGL\GLFW\Include;D:\Libs\C++\OpenGL\GLAD\include</IncludePath>
+    <LibraryPath>$(ProjectDir)lib;D:\Libs\C++\OpenGL\GLFW\Libs;$(LibraryPath)</LibraryPath>
     <ExternalIncludePath>
     </ExternalIncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);C:\Anton\Dev\Essentials\C++\OpenGL\GLFW\Include;C:\Anton\Dev\Essentials\C++\OpenGL\GLAD\include</IncludePath>
-    <LibraryPath>C:\Anton\Dev\Essentials\C++\OpenGL\GLFW\Libs;$(ProjectDir)lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);D:\Libs\C++\OpenGL\GLFW\Include;D:\Libs\C++\OpenGL\GLAD\include</IncludePath>
+    <LibraryPath>$(ProjectDir)lib;D:\Libs\C++\OpenGL\GLFW\Libs;$(LibraryPath)</LibraryPath>
     <ExternalIncludePath>
     </ExternalIncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);C:\Anton\Dev\Essentials\C++\OpenGL\GLFW\Include;C:\Anton\Dev\Essentials\C++\OpenGL\GLAD\include</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);D:\Libs\C++\OpenGL\GLFW\Include;D:\Libs\C++\OpenGL\GLAD\include</IncludePath>
     <ExternalIncludePath />
-    <LibraryPath>C:\Anton\Dev\Essentials\C++\OpenGL\GLFW\Libs;$(ProjectDir)lib;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(ProjectDir)lib;D:\Libs\C++\OpenGL\GLFW\Libs;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);C:\Anton\Dev\Essentials\C++\OpenGL\GLFW\Include;C:\Anton\Dev\Essentials\C++\OpenGL\GLAD\include</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);D:\Libs\C++\OpenGL\GLFW\Include;D:\Libs\C++\OpenGL\GLAD\include</IncludePath>
     <ExternalIncludePath />
-    <LibraryPath>C:\Anton\Dev\Essentials\C++\OpenGL\GLFW\Libs;$(ProjectDir)lib;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(ProjectDir)lib;D:\Libs\C++\OpenGL\GLFW\Libs;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -175,6 +176,9 @@
   <ItemGroup>
     <Image Include="assets\textures\awesomeface.png" />
     <Image Include="assets\textures\container.jpg" />
+    <Image Include="assets\textures\container2.png" />
+    <Image Include="assets\textures\container2_emission.jpg" />
+    <Image Include="assets\textures\container2_specular.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
