@@ -214,16 +214,27 @@ int main() {
 	Cube lightCube = Cube(glm::vec3(0.0f, 0.0f, 0.0f),
 						  glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
 						  glm::vec3(0.05f),
+						  lightVAO,
 						  lightShader);
 
 	Cube cubes[] = {
-		Cube(glm::vec3(0.0f, 0.0f, 0.0f), 
-			 glm::vec3(glm::radians(45.0f), glm::radians(0.0f), glm::radians(0.0f)),
+		Cube(glm::vec3(0.0f, 2.0f, 0.0f), 
+			 glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
 			 glm::vec3(1.0f, 1.0f, 1.0f),
-			 litShader)
+			 litVAO,
+			 litShader,
+			 diffuseMap,
+			 specularMap,
+			 emissionMap)
 	};
 
 	glEnable(GL_DEPTH_TEST);
+
+	glm::vec3 acceleration = glm::vec3(0.0f, -0.0098f, 0.0f);
+
+	float timeToApex = sqrt(6.0f/abs(acceleration.y));
+	float maxVelocity;
+	float rotationPerSecond = glm::radians(90.0f) / timeToApex;
 
 	// --------------------------------------------------------------------------
 	while (!glfwWindowShouldClose(window)) 
@@ -235,61 +246,66 @@ int main() {
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
+
 		// background color
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 
 		// matrices
 		glm::mat4 model;
 		glm::mat4 view = camera.GetViewMatrix();
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 
-		// textures
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, diffuseMap);
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, specularMap);
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, emissionMap);
 
-		// light
+		// light and shaders
 		glm::vec3 lightColor = glm::vec3(1.0f);
-
-		const float radius = 50.0f;
-		float lightX = sin(glfwGetTime()) * radius;
-		float lightZ = cos(glfwGetTime()) * radius;
-		lightPos = glm::vec3(lightX, lightPos.y, lightZ);
 
 		lightShader.use();
 		lightShader.setMat4("view", view);
 		lightShader.setMat4("projection", projection);
 		lightShader.setVec3("lightColor", lightColor);
 
-		lightCube.position = lightPos;
 
-		glBindVertexArray(lightVAO);
-		lightCube.Draw();
-		//lightShader.setMat4("model", model);
-
-		
-		//glDrawArrays(GL_TRIANGLES, 0, 36);
-
-		// shaders
 		litShader.use();
 		litShader.setMat4("view", view);
 		litShader.setMat4("projection", projection);
 		litShader.setVec3("lightPos", lightPos);
 		litShader.setVec3("viewPos", camera.Position);
 
-		glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f);
-		glm::vec3 ambientColor = diffuseColor * glm::vec3(1.0f);
+		litShader.setVec3("light.ambient", lightColor * glm::vec3(0.1f));
+		litShader.setVec3("light.diffuse", lightColor * glm::vec3(0.5f));
 
-		litShader.setVec3("light.ambient", ambientColor);
-		litShader.setVec3("light.diffuse", diffuseColor);
 
-		glBindVertexArray(litVAO);
+		// movement
+		// light cube
+		const float radius = 50.0f;
+		float lightX = sin(glfwGetTime()) * radius;
+		float lightZ = cos(glfwGetTime()) * radius;
+		lightPos = glm::vec3(lightX, lightPos.y, lightZ);
+
+		lightCube.position = lightPos;
+
+		lightCube.Draw();
+
+		// lit cubes
 		for (unsigned int i = 0; i < sizeof(cubes) / sizeof(cubes[0]); i++)
-		{	
+		{
+			cubes[i].PhysicsProcess(acceleration, deltaTime);
+
+			if (cubes[i].position.y <= -1.0f) {
+				cubes[i].velocity *= -0.9f;
+				maxVelocity = cubes[i].velocity.y;
+				timeToApex = abs(maxVelocity / acceleration.y);
+				rotationPerSecond = glm::radians(90.0f) / timeToApex;
+
+				if (rotationPerSecond > glm::radians(270.0f)) {
+					rotationPerSecond = 0.0f;
+				}
+			}
+
+			cubes[i].rotation.z += rotationPerSecond * deltaTime;
+
 			cubes[i].Draw();
 		}
 
