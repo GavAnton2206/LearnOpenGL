@@ -157,6 +157,7 @@
     <ClCompile Include="external\glad.c" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="external\stb_image.cpp" />
+    <ClCompile Include="objects.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\gourand\FragmentShader.frag" />

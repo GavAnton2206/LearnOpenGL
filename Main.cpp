@@ -8,13 +8,14 @@
 #include "external/stb_image.h"
 #include "shader.h"
 #include "camera.h"
+#include "objects.cpp"
 
 #include <random>
 #include <iostream>
 #include <string>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void processInput(GLFWwindow* window, Shader& shader);
+void processInput(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 unsigned int loadTexture(const char* path);
@@ -210,12 +211,24 @@ int main() {
 		glm::vec3(0.0f,  0.0f,  0.0f),
 	};
 
+	Cube lightCube = Cube(glm::vec3(0.0f, 0.0f, 0.0f),
+						  glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+						  glm::vec3(0.05f),
+						  lightShader);
+
+	Cube cubes[] = {
+		Cube(glm::vec3(0.0f, 0.0f, 0.0f), 
+			 glm::vec3(glm::radians(45.0f), glm::radians(0.0f), glm::radians(0.0f)),
+			 glm::vec3(1.0f, 1.0f, 1.0f),
+			 litShader)
+	};
+
 	glEnable(GL_DEPTH_TEST);
 
 	// --------------------------------------------------------------------------
 	while (!glfwWindowShouldClose(window)) 
 	{ 
-		processInput(window, litShader);
+		processInput(window);
 
 		// settings
 		float currentFrame = glfwGetTime();
@@ -232,7 +245,6 @@ int main() {
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 
 		// textures
-		
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, diffuseMap);
 		glActiveTexture(GL_TEXTURE1);
@@ -242,12 +254,8 @@ int main() {
 
 		// light
 		glm::vec3 lightColor = glm::vec3(1.0f);
-		/*
-		lightColor.x = sin(glfwGetTime() * 2.0f);
-		lightColor.y = sin(glfwGetTime() * 0.7f);
-		lightColor.z = sin(glfwGetTime() * 1.3f);*/
 
-		const float radius = 10.0f;
+		const float radius = 50.0f;
 		float lightX = sin(glfwGetTime()) * radius;
 		float lightZ = cos(glfwGetTime()) * radius;
 		lightPos = glm::vec3(lightX, lightPos.y, lightZ);
@@ -256,15 +264,17 @@ int main() {
 		lightShader.setMat4("view", view);
 		lightShader.setMat4("projection", projection);
 		lightShader.setVec3("lightColor", lightColor);
-		model = glm::mat4(1.0f);
-		model = glm::translate(model, lightPos);
-		model = glm::scale(model, glm::vec3(0.2f));
-		lightShader.setMat4("model", model);
+
+		lightCube.position = lightPos;
 
 		glBindVertexArray(lightVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		lightCube.Draw();
+		//lightShader.setMat4("model", model);
 
-		// usage
+		
+		//glDrawArrays(GL_TRIANGLES, 0, 36);
+
+		// shaders
 		litShader.use();
 		litShader.setMat4("view", view);
 		litShader.setMat4("projection", projection);
@@ -278,20 +288,9 @@ int main() {
 		litShader.setVec3("light.diffuse", diffuseColor);
 
 		glBindVertexArray(litVAO);
-		for (unsigned int i = 0; i < sizeof(cubePositions)/sizeof(cubePositions[0]); i++)
-		{
-			model = glm::mat4(1.0f);
-			model = glm::translate(model, cubePositions[i]);
-			float angle = 20.0f * i;
-			if ((i - 0) % 2 == 0) {
-				model = glm::rotate(model, glm::radians(angle) + currentRotation + rotationSpeed * ((float)glfwGetTime() - lastRotationTime), glm::vec3(1.0f, 0.3f, 0.5f));
-			}
-			else {
-				model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-			}
-			litShader.setMat4("model", model);
-
-			glDrawArrays(GL_TRIANGLES, 0, 36);
+		for (unsigned int i = 0; i < sizeof(cubes) / sizeof(cubes[0]); i++)
+		{	
+			cubes[i].Draw();
 		}
 
 		glfwSwapBuffers(window); 
@@ -305,7 +304,7 @@ int main() {
 	return 0;
 }
 
-void processInput(GLFWwindow* window, Shader& shader)
+void processInput(GLFWwindow* window)
 {
 	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
 		if (!isUpPressed) {
@@ -313,8 +312,6 @@ void processInput(GLFWwindow* window, Shader& shader)
 			mix += 0.1f;
 			if (mix > 1)
 				mix = 1;
-			shader.setFloat("mix", mix);
-			shader.use();
 		}
 	}
 	else {
@@ -327,8 +324,6 @@ void processInput(GLFWwindow* window, Shader& shader)
 			mix -= 0.1f;
 			if (mix < 0)
 				mix = 0;
-			shader.setFloat("mix", mix);
-			shader.use();
 		}
 	}
 	else {
