@@ -18,7 +18,7 @@ public:
     Shader& shader;
 
     Cube(glm::vec3 position_, glm::vec3 rotation_, glm::vec3 scale_, 
-        unsigned int& VAO_, 
+        unsigned int& VAO_,
         Shader& shader_, 
         unsigned int texture1_ = 0, unsigned int texture2_ = 0, unsigned int texture3_ = 0) : shader(shader_), VAO(VAO_)
     {
@@ -75,13 +75,14 @@ public:
 private:
 };
 
-
 class Sphere
 {
 public:
     glm::vec3 position;
+    glm::vec3 velocity;
     glm::vec3 rotation; // radians
     glm::vec3 scale;
+    unsigned int indexCount;
     unsigned int texture1, texture2, texture3;
     unsigned int& VAO;
 
@@ -90,27 +91,36 @@ public:
     Sphere(glm::vec3 position_, glm::vec3 rotation_, glm::vec3 scale_,
         unsigned int& VAO_,
         Shader& shader_,
+        unsigned int indexCount_,
         unsigned int texture1_ = 0, unsigned int texture2_ = 0, unsigned int texture3_ = 0) : shader(shader_), VAO(VAO_)
     {
         position = position_;
         rotation = rotation_;
         scale = scale_;
+        indexCount = indexCount_;
         texture1 = texture1_;
         texture2 = texture2_;
         texture3 = texture3_;
+        velocity = glm::vec3(0.0);
     }
 
     glm::mat4 GetModelMatrix() {
         glm::mat4 model = glm::mat4(1.0f);
 
+        model = glm::translate(model, position);
+
+        model = glm::scale(model, scale);
+
         model = glm::rotate(model, rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
         model = glm::rotate(model, rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
         model = glm::rotate(model, rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
 
-        model = glm::scale(model, scale);
-        model = glm::translate(model, position);
-
         return model;
+    }
+
+    void PhysicsProcess(glm::vec3 acceleration, float deltaTime) {
+        velocity += acceleration * deltaTime;
+        position += velocity;
     }
 
     void Draw() {
@@ -133,7 +143,7 @@ public:
         }
 
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
     }
 private:
 };
