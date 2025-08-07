@@ -14,6 +14,7 @@
 #include <iostream>
 #include <string>
 
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -96,41 +97,39 @@ int main() {
 	// ---------------------------------
 	// shaders file translation
 	Shader litShader("assets/shaders/lit/VertexShader.vert", "assets/shaders/lit/FragmentShader.frag");
+	Shader litTexShader("assets/shaders/lit/VertexShaderTex.vert", "assets/shaders/lit/FragmentShaderTex.frag");
 	Shader lightShader("assets/shaders/lighting/VertexShader.vert", "assets/shaders/lighting/FragmentShader.frag");
 
 	// --------------------------------
-	// texture
+	// lit tex shader
 	unsigned int diffuseMap = loadTexture("assets/textures/container2.png");
 	unsigned int specularMap = loadTexture("assets/textures/container2_specular.png");
 	unsigned int emissionMap = loadTexture("assets/textures/container2_emission.jpg");
 
+	litTexShader.use();
+
+	litTexShader.setFloat("mix", mix);
+	
+	litTexShader.setInt("material.diffuse", 0);
+	litTexShader.setInt("material.specular", 1);
+	litTexShader.setInt("material.emission", 2);
+	litTexShader.setFloat("material.shininess", 32.0f);
+
+	litTexShader.setVec3("light.ambient", 1.0f, 1.0f, 1.0f);
+	litTexShader.setVec3("light.diffuse", 1.0f, 1.0f, 1.0f);
+	litTexShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+
+	// lit shader
 	litShader.use();
 
-	// -----------------------------------
-	// textures
-	litShader.setFloat("mix", mix);
-	
-	litShader.setInt("material.diffuse", 0);
-	litShader.setInt("material.specular", 1);
-	litShader.setInt("material.emission", 2);
-	litShader.setVec3("material.specular", 0.50196078f, 0.50196078f, 0.50196078f);
-	litShader.setFloat("material.shininess", 32.0f);
+	litShader.setVec3("material.diffuse", glm::vec3(0.699f, 0.704f, 0.671f));
+	litShader.setVec3("material.specular", glm::vec3(0.731f, 0.775f, 0.715f));
+	litShader.setVec3("material.emission", glm::vec3(0.0f));
+	litShader.setFloat("material.shininess", 4.0f);
 
 	litShader.setVec3("light.ambient", 1.0f, 1.0f, 1.0f);
 	litShader.setVec3("light.diffuse", 1.0f, 1.0f, 1.0f);
 	litShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-
-	//----------------------------------
-	// transform
-	glm::mat4 trans = glm::mat4(1.0f);
-	trans = glm::rotate(trans, glm::radians(47.5f), glm::vec3(0.0, 0.0, 1.0));
-	trans = glm::scale(trans, glm::vec3(0.7, 0.2, 0.4));
-
-	unsigned int transformLoc = glGetUniformLocation(litShader.ID, "transform");
-	glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
-
-	//float borderColor[] = { 1.0f, 1.0f, 0.0f, 1.0f };
-	//glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
 	// ---------------------------------
 	// mesh setups
@@ -138,7 +137,7 @@ int main() {
 	cubeMeshSetup(cubeVBO, cubeVAO);
 
 	unsigned int sphereVBO, sphereVAO, sphereEBO;
-	unsigned int sphereVerticesNum = sphereMeshSetup(sphereVBO, sphereVAO, sphereEBO);
+	unsigned int sphereVerticesNum = sphereMeshSetup(sphereVBO, sphereVAO, sphereEBO, 50, 50);
 
 	// ----------------------------
 	// cubes
@@ -148,9 +147,15 @@ int main() {
 						  cubeVAO,
 						  lightShader);
 
+	Cube floor = Cube(glm::vec3(0.0f, -1.55f, 0.0f),
+		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+		glm::vec3(100.0f, 0.01f, 100.0f),
+		cubeVAO,
+		lightShader);
+
 	Sphere sphere = Sphere(glm::vec3(-2.0f, 2.0f, 0.0f),
 		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
-		glm::vec3(1.0f),
+		glm::vec3(0.545f),
 		sphereVAO,
 		litShader,
 		sphereVerticesNum);
@@ -160,7 +165,7 @@ int main() {
 			 glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
 			 glm::vec3(1.0f, 1.0f, 1.0f),
 			 cubeVAO,
-			 litShader,
+			 litTexShader,
 			 diffuseMap,
 			 specularMap,
 			 emissionMap)
@@ -205,6 +210,16 @@ int main() {
 		lightShader.setVec3("lightColor", lightColor);
 
 
+		litTexShader.use();
+		litTexShader.setMat4("view", view);
+		litTexShader.setMat4("projection", projection);
+		litTexShader.setVec3("lightPos", lightPos);
+		litTexShader.setVec3("viewPos", camera.Position);
+
+		litTexShader.setVec3("light.ambient", lightColor * glm::vec3(0.1f));
+		litTexShader.setVec3("light.diffuse", lightColor * glm::vec3(0.5f));
+
+
 		litShader.use();
 		litShader.setMat4("view", view);
 		litShader.setMat4("projection", projection);
@@ -239,6 +254,7 @@ int main() {
 
 				if (rotationPerSecond > glm::radians(270.0f)) {
 					rotationPerSecond = 0.0f;
+					cubes[i].rotation = glm::vec3(0.0f);
 				}
 			}
 
@@ -264,6 +280,9 @@ int main() {
 
 		sphere.Draw();
 
+		floor.position = glm::vec3(0.0f, -1.725f, 0.0f);
+		floor.Draw();
+
 		glfwSwapBuffers(window); 
 		glfwPollEvents(); 
 	}
@@ -279,9 +298,6 @@ void processInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
 		if (!isUpPressed) {
 			isUpPressed = true;
-			mix += 0.1f;
-			if (mix > 1)
-				mix = 1;
 		}
 	}
 	else {
@@ -291,9 +307,6 @@ void processInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
 		if (!isDownPressed) {
 			isDownPressed = true;
-			mix -= 0.1f;
-			if (mix < 0)
-				mix = 0;
 		}
 	}
 	else {
@@ -302,12 +315,7 @@ void processInput(GLFWwindow* window)
 
 	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
 		if (!isLeftPressed) {
-			isDownPressed = true;
-			if (rotationSpeed < 0.0f) {
-				currentRotation += rotationSpeed * ((float)glfwGetTime() - lastRotationTime);
-				lastRotationTime = (float)glfwGetTime();
-				rotationSpeed *= -1;
-			}
+			isLeftPressed = true;
 		}
 	}
 	else {
@@ -317,11 +325,6 @@ void processInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
 		if (!isRightPressed) {
 			isRightPressed = true;
-			if (rotationSpeed > 0.0f) {
-				currentRotation += rotationSpeed * ((float)glfwGetTime() - lastRotationTime);
-				lastRotationTime = (float)glfwGetTime();
-				rotationSpeed *= -1;
-			}
 		}
 	}
 	else {
@@ -370,9 +373,9 @@ void processInput(GLFWwindow* window)
 
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		std::cout << "Camera pos: (" << std::to_string(camera.Position.x) << ", " << std::to_string(camera.Position.y) << ", "
-								     << std::to_string(camera.Position.z) << ").";
+								     << std::to_string(camera.Position.z) << ")." << "\n";
 		std::cout << "Camera front: (" << std::to_string(camera.Front.x) << ", " << std::to_string(camera.Front.y) << ", "
-									   << std::to_string(camera.Front.z) << ").";
+									   << std::to_string(camera.Front.z) << ")." << "\n";
 		glfwSetWindowShouldClose(window, true);
 	}
 }
