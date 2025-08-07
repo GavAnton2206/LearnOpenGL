@@ -26,6 +26,8 @@ unsigned int sphereMeshSetup(unsigned int& sphereVBO, unsigned int& sphereVAO, u
 
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
+const float PI = 3.1415926525897932384626433832;
+const float rotationPerSecond = 0.25f;
 
 // Input
 // Keys
@@ -43,8 +45,9 @@ double lastX = SCR_WIDTH / 2.0f;
 double lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 
-// Settings
+// Objects
 Camera camera(glm::vec3(0.06f, 0.0f, 16.0f), glm::vec3(0.0f, 1.0f, 0.0f), YAW, PITCH, true, false);
+std::vector<Rigidbody> bouncingObjects;
 
 // Timings
 float deltaTime = 0.0f;
@@ -140,78 +143,91 @@ int main() {
 
 	// ----------------------------
 	// cubes
-	Cube lightCube = Cube(glm::vec3(0.0f, 0.0f, 0.0f),
+	Object3D lightCube = Object3D(glm::vec3(0.0f, 0.0f, 0.0f),
 						  glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
 						  glm::vec3(0.05f),
 						  cubeVAO,
-						  lightShader);
+						  lightShader,
+						  36,
+						  false);
 
-	Cube floor = Cube(glm::vec3(0.0f, -1.55f, 0.0f),
+	Object3D floor = Object3D(glm::vec3(0.0f, -1.55f, 0.0f),
 		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
 		glm::vec3(1000.0f, 0.01f, 1000.00f),
 		cubeVAO,
 		litTexShader,
+		36,
+		false,
 		boardsDiffuseMap,
 		boardsSpecularMap,
 		boardsEmissionMap);
 
-	Sphere spheres[] = {
-		Sphere(glm::vec3(-6.0f, 3.0f, 0.0f),
-				glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
-				glm::vec3(0.545f),
-				sphereVAO,
-				litShader,
-				sphereVerticesNum),
-		Sphere(glm::vec3(-10.0f, 4.0f, 0.0f),
-				glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
-				glm::vec3(0.545f),
-				sphereVAO,
-				litShader,
-				sphereVerticesNum),
-	};
+	float density = 1.0f;
 
-	Cube cubes[] = {
-		Cube(glm::vec3(6.0f, 4.0f, 0.0f),
-			 glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
-			 glm::vec3(1.0f, 1.0f, 1.0f),
-			 cubeVAO,
-			 litTexShader,
-			 boxDiffuseMap,
-			 boxSpecularMap,
-			 boxEmissionMap),
-		Cube(glm::vec3(10.0f, 6.0f, 0.0f),
-			 glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
-			 glm::vec3(1.0f, 1.0f, 1.0f),
-			 cubeVAO,
-			 litTexShader,
-			 boxDiffuseMap,
-			 boxSpecularMap,
-			 boxEmissionMap),
-	};
-
-	Cube fallingCube = Cube(glm::vec3(2.0f, 2.0f, 0.0f),
-		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
-		glm::vec3(1.0f, 1.0f, 1.0f),
-		cubeVAO,
-		litTexShader,
-		boxDiffuseMap,
-		boxSpecularMap,
-		boxEmissionMap);
-
-	Sphere fallingSphere = Sphere(glm::vec3(-2.0f, 2.0f, 0.0f),
+	bouncingObjects.push_back(Rigidbody(glm::vec3(-6.0f, 3.0f, 0.0f),
 		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
 		glm::vec3(0.545f),
 		sphereVAO,
 		litShader,
-		sphereVerticesNum);
+		sphereVerticesNum,
+		true,
+		4.0 / 3.0 * PI * pow(0.545f, 2) * density));
+
+	bouncingObjects.push_back(Rigidbody(glm::vec3(-10.0f, 4.0f, 0.0f),
+		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+		glm::vec3(0.545f),
+		sphereVAO,
+		litShader,
+		sphereVerticesNum,
+		true,
+		4.0 / 3.0 * PI * pow(0.545f, 2) * density));
+	
+	bouncingObjects.push_back(Rigidbody(glm::vec3(6.0f, 4.0f, 0.0f),
+		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+		glm::vec3(1.0f, 1.0f, 1.0f),
+		cubeVAO,
+		litTexShader,
+		36,
+		false,
+		1.0f * density,
+		boxDiffuseMap,
+		boxSpecularMap,
+		boxEmissionMap));
+
+	bouncingObjects.push_back(Rigidbody(glm::vec3(10.0f, 6.0f, 0.0f),
+		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+		glm::vec3(1.0f, 1.0f, 1.0f),
+		cubeVAO,
+		litTexShader,
+		36,
+		false,
+		1.0f * density,
+		boxDiffuseMap,
+		boxSpecularMap,
+		boxEmissionMap));
+
+	Rigidbody fallingCube = Rigidbody(glm::vec3(2.0f, 2.0f, 0.0f),
+		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+		glm::vec3(1.0f, 1.0f, 1.0f),
+		cubeVAO,
+		litTexShader,
+		36,
+		false,
+		1.0f * density,
+		boxDiffuseMap,
+		boxSpecularMap,
+		boxEmissionMap);
+
+	Rigidbody fallingSphere = Rigidbody(glm::vec3(-2.0f, 2.0f, 0.0f),
+		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+		glm::vec3(0.545f),
+		sphereVAO,
+		litShader,
+		sphereVerticesNum,
+		true,
+		4.0 / 3.0 * PI * pow(0.545f, 2) * density);
 
 	glEnable(GL_DEPTH_TEST);
-
-	glm::vec3 acceleration = glm::vec3(0.0f, -0.0098f, 0.0f);
-
-	float timeToApex = sqrt(6.0f/abs(acceleration.y));
-	float maxVelocity;
-	float rotationPerSecond = glm::radians(90.0f) / timeToApex;
 
 	// --------------------------------------------------------------------------
 	while (!glfwWindowShouldClose(window)) 
@@ -276,29 +292,28 @@ int main() {
 		lightCube.Draw();
 
 		// lit cubes
-		for (unsigned int i = 0; i < sizeof(cubes) / sizeof(cubes[0]); i++)
+		for (unsigned int i = 0; i < bouncingObjects.size(); i++)
 		{
-			cubes[i].PhysicsProcess(acceleration, deltaTime);
+			bouncingObjects[i].ApplyForce(glm::vec3(0.0f, -0.0098f, 0.0f));
+			bouncingObjects[i].PhysicsProcess(deltaTime);
 
-			if (cubes[i].position.y <= -1.0f) {
-				cubes[i].velocity *= -0.9f;
-				maxVelocity = cubes[i].velocity.y;
-				timeToApex = abs(maxVelocity / acceleration.y);
-				rotationPerSecond = glm::radians(90.0f) / timeToApex;
+			if (bouncingObjects[i].position.y <= -1.0f) {
+				if(bouncingObjects[i].velocity.y < 0)
+					bouncingObjects[i].velocity *= -0.9f;
 
-				if (rotationPerSecond > glm::radians(270.0f)) {
-					rotationPerSecond = 0.0f;
-					cubes[i].rotation = glm::vec3(0.0f);
+				if (bouncingObjects[i].velocity.y < 0.001f) {
+					bouncingObjects[i].velocity.y = 0.0f;
+					bouncingObjects[i].rotation.z = 0.0f;
 				}
 			}
 
-			cubes[i].rotation.z += rotationPerSecond * deltaTime;
+			bouncingObjects[i].rotation.z += rotationPerSecond * deltaTime;
 
-			cubes[i].Draw();
+			bouncingObjects[i].Draw();
 		}
 
-		fallingCube.PhysicsProcess(acceleration, deltaTime);
-		rotationPerSecond = 0.25f;
+		fallingCube.ApplyForce(glm::vec3(0.0f, -0.0098f, 0.0f));
+		fallingCube.PhysicsProcess(deltaTime);
 
 		if (fallingCube.position.y <= -3.0f) {
 			fallingCube.position.y = 10.0f + random(5.0f);
@@ -309,29 +324,8 @@ int main() {
 
 		fallingCube.Draw();
 
-		for (unsigned int i = 0; i < sizeof(spheres) / sizeof(spheres[0]); i++)
-		{
-			spheres[i].PhysicsProcess(acceleration, deltaTime);
-
-			if (spheres[i].position.y <= -1.0f) {
-				spheres[i].velocity *= -0.9f;
-				maxVelocity = spheres[i].velocity.y;
-				timeToApex = abs(maxVelocity / acceleration.y);
-				rotationPerSecond = glm::radians(90.0f) / timeToApex;
-
-				if (rotationPerSecond > glm::radians(270.0f)) {
-					rotationPerSecond = 0.0f;
-					spheres[i].rotation = glm::vec3(0.0f);
-				}
-			}
-
-			spheres[i].rotation.z += rotationPerSecond * deltaTime;
-
-			spheres[i].Draw();
-		}
-
-		fallingSphere.PhysicsProcess(acceleration, deltaTime);
-		rotationPerSecond = 0.25f;
+		fallingSphere.ApplyForce(glm::vec3(0.0f, -0.0098f, 0.0f));
+		fallingSphere.PhysicsProcess(deltaTime);
 
 		if (fallingSphere.position.y <= -3.0f) {
 			fallingSphere.position.y = 10.0f + random(5.0f);
@@ -372,6 +366,10 @@ void processInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
 		if (!isUpPressed) {
 			isUpPressed = true;
+			for (unsigned int i = 0; i < bouncingObjects.size(); i++)
+			{
+				bouncingObjects[i].ApplyForce(glm::vec3(0.0f, 5.0f, 0.0f));
+			}
 		}
 	}
 	else {
@@ -651,8 +649,6 @@ void cubeMeshSetup(unsigned int& cubeVBO, unsigned int& cubeVAO) {
 
 unsigned int sphereMeshSetup(unsigned int& sphereVBO, unsigned int& sphereVAO, unsigned int& sphereEBO, int stacks, int sectors) {
 	std::vector<float> vertices;
-
-	const float PI = 3.1415926535897932384626433832f;
 
 	for (int i = 0; i <= stacks; ++i) {
 		float stackAngle = PI / 2.0f - i * (PI / stacks); // from pi/2 to -pi/2
