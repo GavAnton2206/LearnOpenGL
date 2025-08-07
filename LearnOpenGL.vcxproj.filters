@@ -71,5 +71,14 @@
     <Image Include="assets\textures\container2_emission.jpg">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="assets\textures\boards.jpg">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\textures\boards_emission.jpg">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\textures\boards_specular.jpg">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

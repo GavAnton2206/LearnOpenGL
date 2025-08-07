@@ -14,13 +14,13 @@
 #include <iostream>
 #include <string>
 
-
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 unsigned int loadTexture(const char* path);
 void cubeMeshSetup(unsigned int& VBO, unsigned int& VAO);
+void cubeMeshSetupX(unsigned int& VBO, unsigned int& VAO, glm::vec2 UV);
 unsigned int sphereMeshSetup(unsigned int& sphereVBO, unsigned int& sphereVAO, unsigned int& sphereEBO, int stacks = 20, int sectors = 20);
 
 
@@ -44,17 +44,11 @@ double lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 
 // Settings
-Camera camera(glm::vec3(0.06f, 0.0f, 16.0f), glm::vec3(-0.036f, 0.155f, -0.987f));
+Camera camera(glm::vec3(0.06f, 0.0f, 16.0f), glm::vec3(0.0f, 1.0f, 0.0f), YAW, PITCH, true, false);
 
 // Timings
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
-
-// Cube Control
-float mix = 0.2f;
-float rotationSpeed = glm::radians(50.0f); // Cube rotation
-float currentRotation = 0.0f;
-float lastRotationTime = 0.0f;
 
 // Light Control
 glm::vec3 lightPos(1.2f, 1.0f, -2.0f);
@@ -102,13 +96,18 @@ int main() {
 
 	// --------------------------------
 	// lit tex shader
-	unsigned int diffuseMap = loadTexture("assets/textures/container2.png");
-	unsigned int specularMap = loadTexture("assets/textures/container2_specular.png");
-	unsigned int emissionMap = loadTexture("assets/textures/container2_emission.jpg");
+	unsigned int boxDiffuseMap = loadTexture("assets/textures/container2.png");
+	unsigned int boxSpecularMap = loadTexture("assets/textures/container2_specular.png");
+	unsigned int boxEmissionMap = loadTexture("assets/textures/container2_emission.jpg");
+
+	unsigned int boardsDiffuseMap = loadTexture("assets/textures/boards.png");
+	unsigned int boardsSpecularMap = loadTexture("assets/textures/boards_specular.png");
+	unsigned int boardsEmissionMap = loadTexture("assets/textures/boards_emission.jpg");
+
 
 	litTexShader.use();
 
-	litTexShader.setFloat("mix", mix);
+	litTexShader.setVec2("scaleUV", glm::vec2(1.0f));
 	
 	litTexShader.setInt("material.diffuse", 0);
 	litTexShader.setInt("material.specular", 1);
@@ -134,7 +133,7 @@ int main() {
 	// ---------------------------------
 	// mesh setups
 	unsigned int cubeVBO, cubeVAO;
-	cubeMeshSetup(cubeVBO, cubeVAO);
+	cubeMeshSetupX(cubeVBO, cubeVAO, glm::vec2(1.0f));
 
 	unsigned int sphereVBO, sphereVAO, sphereEBO;
 	unsigned int sphereVerticesNum = sphereMeshSetup(sphereVBO, sphereVAO, sphereEBO, 50, 50);
@@ -149,27 +148,62 @@ int main() {
 
 	Cube floor = Cube(glm::vec3(0.0f, -1.55f, 0.0f),
 		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
-		glm::vec3(100.0f, 0.01f, 100.0f),
+		glm::vec3(1000.0f, 0.01f, 1000.00f),
 		cubeVAO,
-		lightShader);
+		litTexShader,
+		boardsDiffuseMap,
+		boardsSpecularMap,
+		boardsEmissionMap);
 
-	Sphere sphere = Sphere(glm::vec3(-2.0f, 2.0f, 0.0f),
+	Sphere spheres[] = {
+		Sphere(glm::vec3(-6.0f, 3.0f, 0.0f),
+				glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+				glm::vec3(0.545f),
+				sphereVAO,
+				litShader,
+				sphereVerticesNum),
+		Sphere(glm::vec3(-10.0f, 4.0f, 0.0f),
+				glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+				glm::vec3(0.545f),
+				sphereVAO,
+				litShader,
+				sphereVerticesNum),
+	};
+
+	Cube cubes[] = {
+		Cube(glm::vec3(6.0f, 4.0f, 0.0f),
+			 glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+			 glm::vec3(1.0f, 1.0f, 1.0f),
+			 cubeVAO,
+			 litTexShader,
+			 boxDiffuseMap,
+			 boxSpecularMap,
+			 boxEmissionMap),
+		Cube(glm::vec3(10.0f, 6.0f, 0.0f),
+			 glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+			 glm::vec3(1.0f, 1.0f, 1.0f),
+			 cubeVAO,
+			 litTexShader,
+			 boxDiffuseMap,
+			 boxSpecularMap,
+			 boxEmissionMap),
+	};
+
+	Cube fallingCube = Cube(glm::vec3(2.0f, 2.0f, 0.0f),
+		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+		glm::vec3(1.0f, 1.0f, 1.0f),
+		cubeVAO,
+		litTexShader,
+		boxDiffuseMap,
+		boxSpecularMap,
+		boxEmissionMap);
+
+	Sphere fallingSphere = Sphere(glm::vec3(-2.0f, 2.0f, 0.0f),
 		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
 		glm::vec3(0.545f),
 		sphereVAO,
 		litShader,
 		sphereVerticesNum);
-
-	Cube cubes[] = {
-		Cube(glm::vec3(2.0f, 2.0f, 0.0f), 
-			 glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
-			 glm::vec3(1.0f, 1.0f, 1.0f),
-			 cubeVAO,
-			 litTexShader,
-			 diffuseMap,
-			 specularMap,
-			 emissionMap)
-	};
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -216,7 +250,7 @@ int main() {
 		litTexShader.setVec3("lightPos", lightPos);
 		litTexShader.setVec3("viewPos", camera.Position);
 
-		litTexShader.setVec3("light.ambient", lightColor * glm::vec3(0.1f));
+		litTexShader.setVec3("light.ambient", lightColor * glm::vec3(0.6f));
 		litTexShader.setVec3("light.diffuse", lightColor * glm::vec3(0.5f));
 
 
@@ -226,7 +260,7 @@ int main() {
 		litShader.setVec3("lightPos", lightPos);
 		litShader.setVec3("viewPos", camera.Position);
 
-		litShader.setVec3("light.ambient", lightColor * glm::vec3(0.1f));
+		litShader.setVec3("light.ambient", lightColor * glm::vec3(0.6f));
 		litShader.setVec3("light.diffuse", lightColor * glm::vec3(0.5f));
 
 
@@ -263,31 +297,71 @@ int main() {
 			cubes[i].Draw();
 		}
 
-		sphere.PhysicsProcess(acceleration, deltaTime);
+		fallingCube.PhysicsProcess(acceleration, deltaTime);
+		rotationPerSecond = 0.25f;
 
-		if (sphere.position.y <= -1.0f) {
-			sphere.velocity *= -0.9f;
-			maxVelocity = sphere.velocity.y;
-			timeToApex = abs(maxVelocity / acceleration.y);
-			rotationPerSecond = glm::radians(90.0f) / timeToApex;
-
-			if (rotationPerSecond > glm::radians(270.0f)) {
-				rotationPerSecond = 0.0f;
-			}
+		if (fallingCube.position.y <= -3.0f) {
+			fallingCube.position.y = 10.0f + random(5.0f);
+			fallingCube.velocity = glm::vec3(0.0f);
 		}
 
-		sphere.rotation.z += rotationPerSecond * deltaTime;
+		fallingCube.rotation.z += rotationPerSecond * deltaTime;
 
-		sphere.Draw();
+		fallingCube.Draw();
 
+		for (unsigned int i = 0; i < sizeof(spheres) / sizeof(spheres[0]); i++)
+		{
+			spheres[i].PhysicsProcess(acceleration, deltaTime);
+
+			if (spheres[i].position.y <= -1.0f) {
+				spheres[i].velocity *= -0.9f;
+				maxVelocity = spheres[i].velocity.y;
+				timeToApex = abs(maxVelocity / acceleration.y);
+				rotationPerSecond = glm::radians(90.0f) / timeToApex;
+
+				if (rotationPerSecond > glm::radians(270.0f)) {
+					rotationPerSecond = 0.0f;
+					spheres[i].rotation = glm::vec3(0.0f);
+				}
+			}
+
+			spheres[i].rotation.z += rotationPerSecond * deltaTime;
+
+			spheres[i].Draw();
+		}
+
+		fallingSphere.PhysicsProcess(acceleration, deltaTime);
+		rotationPerSecond = 0.25f;
+
+		if (fallingSphere.position.y <= -3.0f) {
+			fallingSphere.position.y = 10.0f + random(5.0f);
+			fallingSphere.velocity = glm::vec3(0.0f);
+		}
+
+		fallingSphere.rotation.z += rotationPerSecond * deltaTime;
+
+		fallingSphere.Draw();
+
+		floor.shader.use();
+		floor.shader.setVec2("scaleUV", glm::vec2(1000.0f));
 		floor.position = glm::vec3(0.0f, -1.725f, 0.0f);
 		floor.Draw();
+		floor.shader.setVec2("scaleUV", glm::vec2(1.0f));
 
 		glfwSwapBuffers(window); 
 		glfwPollEvents(); 
 	}
 	glDeleteVertexArrays(1, &cubeVAO);
 	glDeleteBuffers(1, &cubeVBO);
+	glDeleteVertexArrays(1, &sphereVAO);
+	glDeleteBuffers(1, &sphereVBO);
+	glDeleteBuffers(1, &sphereEBO);
+	glDeleteTextures(1, &boxDiffuseMap);
+	glDeleteTextures(1, &boxSpecularMap);
+	glDeleteTextures(1, &boxEmissionMap);
+	glDeleteTextures(1, &boardsDiffuseMap);
+	glDeleteTextures(1, &boardsSpecularMap);
+	glDeleteTextures(1, &boardsEmissionMap);
 
 	glfwTerminate();
 	return 0;
@@ -376,6 +450,10 @@ void processInput(GLFWwindow* window)
 								     << std::to_string(camera.Position.z) << ")." << "\n";
 		std::cout << "Camera front: (" << std::to_string(camera.Front.x) << ", " << std::to_string(camera.Front.y) << ", "
 									   << std::to_string(camera.Front.z) << ")." << "\n";
+		std::cout << "Camera Yaw: (" << std::to_string(camera.Yaw) << ")." << "\n";
+		std::cout << "Camera Pitch: (" << std::to_string(camera.Pitch) << ")." << "\n";
+
+
 		glfwSetWindowShouldClose(window, true);
 	}
 }
@@ -430,7 +508,7 @@ unsigned int loadTexture(char const* path)
 		glBindTexture(GL_TEXTURE_2D, textureID);
 		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
-
+		
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -445,6 +523,68 @@ unsigned int loadTexture(char const* path)
 	}
 
 	return textureID;
+}
+
+void cubeMeshSetupX(unsigned int& cubeVBO, unsigned int& cubeVAO, glm::vec2 UV) {
+	float vertices[] = {
+		// positions          // normals           // texture coords
+		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
+		 0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  UV.x, 0.0f,
+		 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  UV.x, UV.y,
+		 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  UV.x, UV.y,
+		-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, UV.y,
+		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
+
+		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,
+		 0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   UV.x, 0.0f,
+		 0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   UV.x, UV.y,
+		 0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   UV.x, UV.y,
+		-0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, UV.y,
+		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,
+
+		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  UV.x, 0.0f,
+		-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  UV.x, UV.y,
+		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, UV.y,
+		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, UV.y,
+		-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
+		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  UV.x, 0.0f,
+
+		 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  UV.x, 0.0f,
+		 0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  UV.x, UV.y,
+		 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, UV.y,
+		 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, UV.y,
+		 0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
+		 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  UV.x, 0.0f,
+
+		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, UV.y,
+		 0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  UV.x, UV.y,
+		 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  UV.x, 0.0f,
+		 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  UV.x, 0.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, UV.y,
+
+		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, UV.y,
+		 0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  UV.x, UV.y,
+		 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  UV.x, 0.0f,
+		 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  UV.x, 0.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
+		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, UV.y
+	};
+
+	glGenVertexArrays(1, &cubeVAO);
+	glGenBuffers(1, &cubeVBO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	glBindVertexArray(cubeVAO);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
 }
 
 void cubeMeshSetup(unsigned int& cubeVBO, unsigned int& cubeVAO) {

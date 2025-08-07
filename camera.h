@@ -13,7 +13,7 @@ enum Camera_Movement {
 };
 
 const float YAW = -90.0f;
-const float PITCH = 0.0f;
+const float PITCH = 10.0f;
 const float SPEED = 4.0f;
 const float SENSITIVITY = 0.1f;
 const float ZOOM = 45.0f;
@@ -35,21 +35,27 @@ public:
     float MouseSensitivity;
     float Zoom;
 
-    Camera(glm::vec3 position, glm::vec3 front, glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH) : MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
+    bool Locked, Movable;
+
+    Camera(glm::vec3 position, glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH, bool locked = false, bool movable = true) : Front(glm::vec3(0.0f, 0.0f, 0.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
     {
         Position = position;
         WorldUp = up;
-        Front = front;
         Yaw = yaw;
         Pitch = pitch;
+        Locked = locked;
+        Movable = movable;
         updateCameraVectors();
     }
 
-    Camera(float posX, float posY, float posZ, float frontX, float frontY, float frontZ, float upX, float upY, float upZ, float yaw, float pitch) : MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
+    Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch, bool locked) : MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
     {
         Position = glm::vec3(posX, posY, posZ);
         WorldUp = glm::vec3(upX, upY, upZ);
-        Front = glm::vec3(frontX, frontY, frontZ);
+        Front.x = 0.0f;
+        Front.y = 0.0f;
+        Front.z = 0.0f;
+        Locked = locked;
         Yaw = yaw;
         Pitch = pitch;
         updateCameraVectors();
@@ -62,6 +68,9 @@ public:
 
     void ProcessKeyboard(Camera_Movement direction, float deltaTime)
     {
+        if (!Movable)
+            return;
+
         float velocity = MovementSpeed * deltaTime;
         if (direction == FORWARD)
             Position += glm::vec3(Front.x, 0, Front.z) * velocity;
@@ -75,6 +84,9 @@ public:
 
     void ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true)
     {
+        if (Locked)
+            return;
+
         xoffset *= MouseSensitivity;
         yoffset *= MouseSensitivity;
 

@@ -178,6 +178,9 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="assets\textures\awesomeface.png" />
+    <Image Include="assets\textures\boards.jpg" />
+    <Image Include="assets\textures\boards_emission.jpg" />
+    <Image Include="assets\textures\boards_specular.jpg" />
     <Image Include="assets\textures\container.jpg" />
     <Image Include="assets\textures\container2.png" />
     <Image Include="assets\textures\container2_emission.jpg" />
