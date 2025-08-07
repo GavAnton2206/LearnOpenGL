@@ -39,6 +39,8 @@ bool isWPressed = false;
 bool isSPressed = false;
 bool isAPressed = false;
 bool isDPressed = false;
+bool isSpacePressed = false;
+bool pause = false;
 
 // Mouse
 double lastX = SCR_WIDTH / 2.0f;
@@ -181,7 +183,7 @@ int main() {
 		sphereVerticesNum,
 		true,
 		4.0 / 3.0 * PI * pow(0.545f, 2) * density));
-	
+
 	bouncingObjects.push_back(Rigidbody(glm::vec3(6.0f, 4.0f, 0.0f),
 		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
 		glm::vec3(1.0f, 1.0f, 1.0f),
@@ -294,8 +296,20 @@ int main() {
 		// lit cubes
 		for (unsigned int i = 0; i < bouncingObjects.size(); i++)
 		{
-			bouncingObjects[i].ApplyForce(glm::vec3(0.0f, -0.0098f, 0.0f));
-			bouncingObjects[i].PhysicsProcess(deltaTime);
+			if(!pause)
+				bouncingObjects[i].ApplyForce(glm::vec3(0.0f, -0.0098f, 0.0f));
+			
+			for (unsigned int j = 0; j < bouncingObjects.size(); j++)
+			{
+				if (i == j) continue;
+				/*
+				if (checkCollision(*bouncingObjects[i].shape, *bouncingObjects[j].shape)) {
+
+				}*/
+			}
+			
+			if (!pause)
+				bouncingObjects[i].PhysicsProcess(deltaTime);
 
 			if (bouncingObjects[i].position.y <= -1.0f) {
 				if(bouncingObjects[i].velocity.y < 0)
@@ -307,32 +321,36 @@ int main() {
 				}
 			}
 
-			bouncingObjects[i].rotation.z += rotationPerSecond * deltaTime;
+			if (!pause)
+				bouncingObjects[i].rotation.z += rotationPerSecond * deltaTime;
 
 			bouncingObjects[i].Draw();
 		}
 
-		fallingCube.ApplyForce(glm::vec3(0.0f, -0.0098f, 0.0f));
-		fallingCube.PhysicsProcess(deltaTime);
+		if (!pause) {
+			fallingCube.ApplyForce(glm::vec3(0.0f, -0.0098f, 0.0f));
+			fallingCube.PhysicsProcess(deltaTime);
+			fallingCube.rotation.z += rotationPerSecond * deltaTime;
+		}
 
 		if (fallingCube.position.y <= -3.0f) {
 			fallingCube.position.y = 10.0f + random(5.0f);
 			fallingCube.velocity = glm::vec3(0.0f);
 		}
 
-		fallingCube.rotation.z += rotationPerSecond * deltaTime;
-
 		fallingCube.Draw();
 
-		fallingSphere.ApplyForce(glm::vec3(0.0f, -0.0098f, 0.0f));
-		fallingSphere.PhysicsProcess(deltaTime);
+		if (!pause) {
+			fallingSphere.ApplyForce(glm::vec3(0.0f, -0.0098f, 0.0f));
+			fallingSphere.PhysicsProcess(deltaTime);
+			fallingSphere.rotation.z += rotationPerSecond * deltaTime;
+		}
 
 		if (fallingSphere.position.y <= -3.0f) {
 			fallingSphere.position.y = 10.0f + random(5.0f);
 			fallingSphere.velocity = glm::vec3(0.0f);
 		}
 
-		fallingSphere.rotation.z += rotationPerSecond * deltaTime;
 
 		fallingSphere.Draw();
 
@@ -366,9 +384,11 @@ void processInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
 		if (!isUpPressed) {
 			isUpPressed = true;
-			for (unsigned int i = 0; i < bouncingObjects.size(); i++)
-			{
-				bouncingObjects[i].ApplyForce(glm::vec3(0.0f, 5.0f, 0.0f));
+			if (!pause) {
+				for (unsigned int i = 0; i < bouncingObjects.size(); i++)
+				{
+					bouncingObjects[i].ApplyForce(glm::vec3(0.0f, 5.0f, 0.0f));
+				}
 			}
 		}
 	}
@@ -441,6 +461,16 @@ void processInput(GLFWwindow* window)
 	}
 	else {
 		isDPressed = false;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+		if (!isSpacePressed) {
+			isSpacePressed = true;
+			pause = !pause;
+		}
+	}
+	else {
+		isSpacePressed = false;
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
