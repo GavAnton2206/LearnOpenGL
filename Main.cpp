@@ -24,6 +24,12 @@ void cubeMeshSetupX(unsigned int& VBO, unsigned int& VAO, glm::vec2 UV);
 unsigned int sphereMeshSetup(unsigned int& sphereVBO, unsigned int& sphereVAO, unsigned int& sphereEBO, int stacks = 20, int sectors = 20);
 
 
+bool checkCollision(const SphereShape& s1, const SphereShape& s2);
+bool checkCollision(const SphereShape& s1, const AABBShape& s2);
+bool checkCollision(const AABBShape& s1, const SphereShape& s2);
+bool checkCollision(const AABBShape& s1, const AABBShape& s2);
+bool checkCollisions(const Rigidbody& obj1, const Rigidbody& obj2);
+
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
 const float PI = 3.1415926525897932384626433832;
@@ -175,6 +181,34 @@ int main() {
 		true,
 		4.0 / 3.0 * PI * pow(0.545f, 2) * density));
 
+	bouncingObjects.push_back(Rigidbody(glm::vec3(-6.0f, 7.0f, 0.0f),
+		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+		glm::vec3(0.545f),
+		sphereVAO,
+		litShader,
+		sphereVerticesNum,
+		true,
+		4.0 / 3.0 * PI * pow(0.545f, 2) * density));
+
+/*
+	bouncingObjects.push_back(Rigidbody(glm::vec3(-6.0f, 10.0f, 0.0f),
+		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+		glm::vec3(0.545f),
+		sphereVAO,
+		litShader,
+		sphereVerticesNum,
+		true,
+		4.0 / 3.0 * PI * pow(0.545f, 2) * density));
+
+	bouncingObjects.push_back(Rigidbody(glm::vec3(-6.0f, 1.0f, 0.0f),
+		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+		glm::vec3(0.545f),
+		sphereVAO,
+		litShader,
+		sphereVerticesNum,
+		true,
+		4.0 / 3.0 * PI * pow(0.545f, 2) * density));
+
 	bouncingObjects.push_back(Rigidbody(glm::vec3(-10.0f, 4.0f, 0.0f),
 		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
 		glm::vec3(0.545f),
@@ -207,6 +241,7 @@ int main() {
 		boxDiffuseMap,
 		boxSpecularMap,
 		boxEmissionMap));
+		*/
 
 	Rigidbody fallingCube = Rigidbody(glm::vec3(2.0f, 2.0f, 0.0f),
 		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
@@ -289,7 +324,7 @@ int main() {
 		float lightZ = cos(glfwGetTime()) * radius;
 		lightPos = glm::vec3(lightX, lightPos.y, lightZ);
 
-		lightCube.position = lightPos;
+		lightCube.SetPosition(lightPos);
 
 		lightCube.Draw();
 
@@ -299,30 +334,29 @@ int main() {
 			if(!pause)
 				bouncingObjects[i].ApplyForce(glm::vec3(0.0f, -0.0098f, 0.0f));
 			
-			for (unsigned int j = 0; j < bouncingObjects.size(); j++)
+			for (unsigned int j = i + 1; j < bouncingObjects.size(); j++)
 			{
-				if (i == j) continue;
-				/*
-				if (checkCollision(*bouncingObjects[i].shape, *bouncingObjects[j].shape)) {
-
-				}*/
+				if (checkCollisions(bouncingObjects[i], bouncingObjects[j])) {
+					bouncingObjects[i].drawn = false;
+					bouncingObjects[j].drawn = false;
+				}
 			}
 			
 			if (!pause)
 				bouncingObjects[i].PhysicsProcess(deltaTime);
 
-			if (bouncingObjects[i].position.y <= -1.0f) {
+			if (bouncingObjects[i].GetPosition().y <= -1.0f) {
 				if(bouncingObjects[i].velocity.y < 0)
 					bouncingObjects[i].velocity *= -0.9f;
 
 				if (bouncingObjects[i].velocity.y < 0.001f) {
 					bouncingObjects[i].velocity.y = 0.0f;
-					bouncingObjects[i].rotation.z = 0.0f;
+					bouncingObjects[i].SetRotation(bouncingObjects[i].GetRotation().x, bouncingObjects[i].GetRotation().y, 0.0f);
 				}
 			}
 
 			if (!pause)
-				bouncingObjects[i].rotation.z += rotationPerSecond * deltaTime;
+				bouncingObjects[i].SetRotation(bouncingObjects[i].GetRotation().x, bouncingObjects[i].GetRotation().y, bouncingObjects[i].GetRotation().z + rotationPerSecond * deltaTime);
 
 			bouncingObjects[i].Draw();
 		}
@@ -330,11 +364,11 @@ int main() {
 		if (!pause) {
 			fallingCube.ApplyForce(glm::vec3(0.0f, -0.0098f, 0.0f));
 			fallingCube.PhysicsProcess(deltaTime);
-			fallingCube.rotation.z += rotationPerSecond * deltaTime;
+			fallingCube.SetRotation(fallingCube.GetRotation().x, fallingCube.GetRotation().y, fallingCube.GetRotation().z + rotationPerSecond * deltaTime);
 		}
 
-		if (fallingCube.position.y <= -3.0f) {
-			fallingCube.position.y = 10.0f + random(5.0f);
+		if (fallingCube.GetPosition().y <= -3.0f) {
+			fallingCube.SetPosition(fallingCube.GetPosition().x, 10.0f + random(5.0f), fallingCube.GetPosition().z);
 			fallingCube.velocity = glm::vec3(0.0f);
 		}
 
@@ -343,11 +377,11 @@ int main() {
 		if (!pause) {
 			fallingSphere.ApplyForce(glm::vec3(0.0f, -0.0098f, 0.0f));
 			fallingSphere.PhysicsProcess(deltaTime);
-			fallingSphere.rotation.z += rotationPerSecond * deltaTime;
+			fallingSphere.SetRotation(fallingCube.GetRotation().x, fallingCube.GetRotation().y, fallingCube.GetRotation().z + rotationPerSecond * deltaTime);
 		}
 
-		if (fallingSphere.position.y <= -3.0f) {
-			fallingSphere.position.y = 10.0f + random(5.0f);
+		if (fallingSphere.GetPosition().y <= -3.0f) {
+			fallingSphere.SetPosition(fallingSphere.GetPosition().x, 10.0f + random(5.0f), fallingSphere.GetPosition().z);
 			fallingSphere.velocity = glm::vec3(0.0f);
 		}
 
@@ -356,7 +390,6 @@ int main() {
 
 		floor.shader.use();
 		floor.shader.setVec2("scaleUV", glm::vec2(1000.0f));
-		floor.position = glm::vec3(0.0f, -1.725f, 0.0f);
 		floor.Draw();
 		floor.shader.setVec2("scaleUV", glm::vec2(1.0f));
 
@@ -762,4 +795,35 @@ unsigned int sphereMeshSetup(unsigned int& sphereVBO, unsigned int& sphereVAO, u
 	glBindVertexArray(0);
 
 	return static_cast<unsigned int>(indices.size());
+}
+
+bool checkCollision(const SphereShape& obj1, const SphereShape& obj2) {
+	float dist = glm::length(obj1.position - obj2.position);
+	float r = obj1.radius + obj2.radius;
+	return dist <= r;
+}
+
+bool checkCollision(const SphereShape& obj1, const AABBShape& obj2) {
+	glm::vec3 closestPoint = glm::clamp(obj1.position, obj2.min(), obj2.max());
+	float dist = glm::length(obj1.position - closestPoint);
+	return dist <= obj1.radius;
+}
+
+bool checkCollision(const AABBShape& obj1, const SphereShape& obj2) {
+	return checkCollision(obj2, obj1);
+}
+
+bool checkCollision(const AABBShape& obj1, const AABBShape& obj2) {
+	glm::vec3 minA = obj1.min();
+	glm::vec3 minB = obj2.min();
+	glm::vec3 maxA = obj1.max();
+	glm::vec3 maxB = obj2.max();
+
+	return (minA.x <= maxB.x && maxA.x >= minB.x) &&
+		(minA.y <= maxB.y && maxA.y >= minB.y) &&
+		(minA.z <= maxB.z && maxA.z >= minB.z);
+}
+
+bool checkCollisions(const Rigidbody& obj1, const Rigidbody& obj2) {
+	return std::visit([](auto&& s1, auto&& s2) { return checkCollision(s1, s2); }, obj1.shape, obj2.shape);
 }

@@ -3,61 +3,62 @@
 #include "include/glm/gtc/matrix_transform.hpp"
 #include "include/glm/gtc/type_ptr.hpp"
 
+#include <variant>
+
 #include "shader.h"
 
-enum class ShapeType {
-    SPHERE,
-    AABB
-};
-
-class Shape {
-public:
-    ShapeType type;
+struct SphereShape {
     glm::vec3 position;
-    
-    virtual ~Shape() = default;
-};
-
-class SphereShape : public Shape {
-public:
     float radius;
 
-    SphereShape(float radius_, const glm::vec3& position_) {
-        radius = radius_;
-        position = position_;
-        type = ShapeType::SPHERE;
-    }
+    SphereShape() = default;
+    SphereShape(const glm::vec3& position_, const float& radius_) : position(position_), radius(radius_) {}
 };
-class AABB : public Shape {
-public:
+
+struct AABBShape {
+    glm::vec3 position;
     glm::vec3 halfSize;
 
-    AABB(const glm::vec3& size, const glm::vec3& position_) {
-        halfSize = size/2.0f;
-        position = position_;
-        type = ShapeType::AABB;
-    }
+    AABBShape() = default;
+    AABBShape(const glm::vec3& position_, const glm::vec3& size) : position(position_), halfSize(size / 2.0f) {}
 
     glm::vec3 min() const {
         return position - halfSize;
     }
+
     glm::vec3 max() const {
         return position + halfSize;
     }
 };
 
+/*
+struct OBBShape {
+    glm::vec3 position;
+    glm::vec3 halfSize;
+    glm::mat3 orientation;
+
+    AABBShape() = default;
+    AABBShape(const glm::vec3& position_, const glm::vec3& size) : position(position_), halfSize(size / 2.0f) {}
+
+    glm::vec3 min() const {
+        return position - halfSize;
+    }
+
+    glm::vec3 max() const {
+        return position + halfSize;
+    }
+};*/
+
 class Object3D
 {
 public:
-    glm::vec3 position;
-    glm::vec3 rotation; // radians
-    glm::vec3 scale;
     unsigned int indexCount;
     unsigned int texture1, texture2, texture3;
     unsigned int& VAO;
 
     Shader& shader;
     bool drawElements;
+    bool drawn;
 
     Object3D(glm::vec3 position_, glm::vec3 rotation_, glm::vec3 scale_,
         unsigned int& VAO_,
@@ -74,6 +75,7 @@ public:
         texture2 = texture2_;
         texture3 = texture3_;
         drawElements = drawElements_;
+        drawn = true;
     }
 
     glm::mat4 GetModelMatrix() {
@@ -91,6 +93,9 @@ public:
     }
 
     void Draw() {
+        if (!drawn)
+            return;
+
         shader.use();
         shader.setMat4("model", GetModelMatrix());
 
@@ -118,7 +123,40 @@ public:
             glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
         }
     }
-private:
+
+    void SetPosition(glm::vec3 position_) {
+        position = position_;
+    }
+    void SetPosition(float x, float y, float z) {
+        position = glm::vec3(x, y, z);
+    }
+    glm::vec3 GetPosition() {
+        return position;
+    }
+
+    void SetRotation(glm::vec3 rotation_) {
+        rotation = rotation_;
+    }
+    void SetRotation(float x, float y, float z) {
+        rotation = glm::vec3(x, y, z);
+    }
+    glm::vec3 GetRotation() {
+        return rotation;
+    }
+    
+    void SetScale(glm::vec3 scale_) {
+        scale = scale_;
+    }
+    void SetScale(float x, float y, float z) {
+        scale = glm::vec3(x, y, z);
+    }
+    glm::vec3 GetScale() {
+        return scale;
+    }
+protected:
+    glm::vec3 position;
+    glm::vec3 rotation;
+    glm::vec3 scale;
 };
 
 class Rigidbody : public Object3D {
@@ -126,7 +164,7 @@ public:
     glm::vec3 acceleration;
     glm::vec3 velocity;
     float mass;
-    const Shape* shape;
+    std::variant<SphereShape, AABBShape> shape;
 
     Rigidbody(glm::vec3 position_, glm::vec3 rotation_, glm::vec3 scale_,
         unsigned int& VAO_,
@@ -134,12 +172,19 @@ public:
         unsigned int indexCount_,
         bool drawElements_,
         float mass_,
-        //const Shape* shape_,
-        unsigned int texture1_ = 0, unsigned int texture2_ = 0, unsigned int texture3_ = 0) : Object3D(position_, rotation_, scale_, VAO_, shader_, indexCount_, drawElements_, texture1_, texture2_, texture3_)// , shape(shape_)
+        //ShapeType shape_ = SphereShape(glm::vec3(0.0f), -1.0f),
+        unsigned int texture1_ = 0, unsigned int texture2_ = 0, unsigned int texture3_ = 0) : Object3D(position_, rotation_, scale_, VAO_, shader_, indexCount_, drawElements_, texture1_, texture2_, texture3_)
     {
         velocity = glm::vec3(0.0f);
         acceleration = glm::vec3(0.0f);
         mass = mass_;
+
+        if (drawElements_) { // sphere
+            shape = SphereShape(position, scale_.x);
+        }
+        else {
+            shape = AABBShape(position, scale_);
+        }
     }
 
     void ApplyForce(const glm::vec3& force) {
@@ -152,47 +197,46 @@ public:
 
         acceleration = glm::vec3(0.0f);
     }
+
+    void SetPosition(glm::vec3 position_) {
+        position = position_;
+        std::visit([&position_](auto& s) {
+            s.position = position_;
+        }, shape);
+    }
+    void SetPosition(float x, float y, float z) {
+        position = glm::vec3(x, y, z);
+        std::visit([&x, &y, &z](auto& s) {
+            s.position = glm::vec3(x, y, z);
+        }, shape);
+    }
+    glm::vec3 GetPosition() {
+        return position;
+    }
+
+    void SetScale(glm::vec3 scale_) {
+        scale = scale_;
+        std::visit([&scale_](auto& s) {
+            if constexpr (std::is_same_v<std::decay_t<decltype(shape)>, AABBShape>) {
+                s.halfSize = scale_/2.0f;
+            }
+            if constexpr (std::is_same_v<std::decay_t<decltype(shape)>, SphereShape>) {
+                s.radius = scale_.x;
+            }
+        }, shape);
+    }
+    void SetScale(float x, float y, float z) {
+        scale = glm::vec3(x, y, z);
+        std::visit([&x, &y, &z](auto& s) {
+            if constexpr (std::is_same_v<std::decay_t<decltype(shape)>, AABBShape>) {
+                s.halfSize = glm::vec3(x, y, z) / 2.0f;
+            }
+            if constexpr (std::is_same_v<std::decay_t<decltype(shape)>, SphereShape>) {
+                s.radius = x;
+            }
+        }, shape);
+    }
+    glm::vec3 GetScale() {
+        return scale;
+    }
 };
-
-/*
-bool checkCollision(const Shape& obj1, const Shape& obj2) {
-    if (obj1.type == ShapeType::SPHERE && obj2.type == ShapeType::SPHERE) {
-        const SphereShape* sphere1 = dynamic_cast<const SphereShape*>(&obj1);
-        const SphereShape* sphere2 = dynamic_cast<const SphereShape*>(&obj2);
-        if (sphere1 && sphere2) {
-            float dist = glm::length(sphere1->position - sphere2->position);
-            float radius = sphere1->radius + sphere2->radius;
-            return dist < radius;
-        }
-    }
-    else if (obj1.type == ShapeType::SPHERE && obj2.type == ShapeType::AABB) {
-        const SphereShape* sphere = dynamic_cast<const SphereShape*>(&obj1);
-        const AABB* box = dynamic_cast<const AABB*>(&obj2);
-        if (sphere && box) {
-            return checkCollisionSphereAABB(sphere, box);
-        }
-    }
-    else if (obj1.type == ShapeType::AABB && obj2.type == ShapeType::SPHERE) {
-        const SphereShape* sphere = dynamic_cast<const SphereShape*>(&obj2);
-        const AABB* box = dynamic_cast<const AABB*>(&obj1);
-        if (sphere && box) {
-            return checkCollisionSphereAABB(sphere, box);
-        }
-    }
-    else if (obj1.type == ShapeType::AABB && obj2.type == ShapeType::AABB) {
-        const AABB* a = dynamic_cast<const AABB*>(&obj1);
-        const AABB* b = dynamic_cast<const AABB*>(&obj2);
-        if (a && b) {
-            return (a->min().x <= b->max().x && a->max().x >= b->min().x) &&
-                (a->min().y <= b->max().y && a->max().y >= b->min().y) &&
-                (a->min().z <= b->max().z && a->max().z >= b->min().z);
-        }
-    }
-}
-
-bool checkCollisionSphereAABB(const SphereShape* sphere, const AABB* aabb) {
-    glm::vec3 clamped = glm::clamp(sphere->position, aabb->min(), aabb->max());
-    float distSq = glm::length(clamped - sphere->position);
-    return distSq < sphere->radius;
-}
-*/
