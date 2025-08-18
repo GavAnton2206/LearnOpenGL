@@ -24,11 +24,13 @@ void cubeMeshSetupX(unsigned int& VBO, unsigned int& VAO, glm::vec2 UV);
 unsigned int sphereMeshSetup(unsigned int& sphereVBO, unsigned int& sphereVAO, unsigned int& sphereEBO, int stacks = 20, int sectors = 20);
 
 
-bool checkCollision(const SphereShape& s1, const SphereShape& s2);
-bool checkCollision(const SphereShape& s1, const AABBShape& s2);
-bool checkCollision(const AABBShape& s1, const SphereShape& s2);
-bool checkCollision(const AABBShape& s1, const AABBShape& s2);
-bool checkCollisions(const Rigidbody& obj1, const Rigidbody& obj2);
+CollisionInfo checkCollision(const SphereShape& s1, const SphereShape& s2);
+CollisionInfo checkCollision(const SphereShape& s1, const AABBShape& s2);
+CollisionInfo checkCollision(const AABBShape& s1, const SphereShape& s2);
+CollisionInfo checkCollision(const AABBShape& s1, const AABBShape& s2);
+CollisionInfo checkCollisions(const Rigidbody& obj1, const Rigidbody& obj2);
+
+void resolveCollision(Rigidbody& A, Rigidbody& B, const CollisionInfo& info);
 
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
@@ -190,7 +192,6 @@ int main() {
 		true,
 		4.0 / 3.0 * PI * pow(0.545f, 2) * density));
 
-/*
 	bouncingObjects.push_back(Rigidbody(glm::vec3(-6.0f, 10.0f, 0.0f),
 		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
 		glm::vec3(0.545f),
@@ -241,7 +242,6 @@ int main() {
 		boxDiffuseMap,
 		boxSpecularMap,
 		boxEmissionMap));
-		*/
 
 	Rigidbody fallingCube = Rigidbody(glm::vec3(2.0f, 2.0f, 0.0f),
 		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
@@ -336,9 +336,10 @@ int main() {
 			
 			for (unsigned int j = i + 1; j < bouncingObjects.size(); j++)
 			{
-				if (checkCollisions(bouncingObjects[i], bouncingObjects[j])) {
-					bouncingObjects[i].drawn = false;
-					bouncingObjects[j].drawn = false;
+				CollisionInfo info = checkCollisions(bouncingObjects[i], bouncingObjects[j]);
+
+				if (info.collided) {
+					resolveCollision(bouncingObjects[i], bouncingObjects[j], info);
 				}
 			}
 			
@@ -797,33 +798,109 @@ unsigned int sphereMeshSetup(unsigned int& sphereVBO, unsigned int& sphereVAO, u
 	return static_cast<unsigned int>(indices.size());
 }
 
-bool checkCollision(const SphereShape& obj1, const SphereShape& obj2) {
+CollisionInfo checkCollision(const SphereShape& obj1, const SphereShape& obj2) {
+	CollisionInfo info;
+
+	glm::vec3 posDiff = obj1.position - obj2.position;
 	float dist = glm::length(obj1.position - obj2.position);
 	float r = obj1.radius + obj2.radius;
-	return dist <= r;
+	if (dist < r) {
+		info.collided = true;
+		info.penetration = r - dist;
+		info.normal = (dist > 0.0f) ? posDiff / dist : glm::vec3(1, 0, 0);
+	}
+
+	return info;
 }
 
-bool checkCollision(const SphereShape& obj1, const AABBShape& obj2) {
+CollisionInfo checkCollision(const SphereShape& obj1, const AABBShape& obj2) {
+	CollisionInfo info;
+
 	glm::vec3 closestPoint = glm::clamp(obj1.position, obj2.min(), obj2.max());
-	float dist = glm::length(obj1.position - closestPoint);
-	return dist <= obj1.radius;
+	glm::vec3 posDiff = obj1.position - closestPoint;
+	float dist = glm::length(posDiff);
+
+	if (dist < obj1.radius) {
+		info.collided = true;
+		info.penetration = obj1.radius - dist;
+		info.normal = (dist > 0.0f) ? posDiff / dist : glm::vec3(1, 0, 0);
+	}
+
+	return info;
 }
 
-bool checkCollision(const AABBShape& obj1, const SphereShape& obj2) {
+CollisionInfo checkCollision(const AABBShape& obj1, const SphereShape& obj2) {
 	return checkCollision(obj2, obj1);
 }
 
-bool checkCollision(const AABBShape& obj1, const AABBShape& obj2) {
+CollisionInfo checkCollision(const AABBShape& obj1, const AABBShape& obj2) {
+	CollisionInfo info;
+
 	glm::vec3 minA = obj1.min();
 	glm::vec3 minB = obj2.min();
 	glm::vec3 maxA = obj1.max();
 	glm::vec3 maxB = obj2.max();
 
-	return (minA.x <= maxB.x && maxA.x >= minB.x) &&
+	if ((minA.x <= maxB.x && maxA.x >= minB.x) &&
 		(minA.y <= maxB.y && maxA.y >= minB.y) &&
-		(minA.z <= maxB.z && maxA.z >= minB.z);
+		(minA.z <= maxB.z && maxA.z >= minB.z)) 
+	{
+		info.collided = true;
+
+
+		float overlapX = std::min(maxA.x, maxB.x) - std::max(minA.x, minB.x);
+		float overlapY = std::min(maxA.y, maxB.y) - std::max(minA.y, minB.y);
+		float overlapZ = std::min(maxA.z, maxB.z) - std::max(minA.z, minB.z);
+
+		if (overlapX < overlapY && overlapX < overlapZ) {
+			info.penetration = overlapX;
+			info.normal = (obj1.position.x < obj2.position.x) ? glm::vec3(-1, 0, 0) : glm::vec3(1, 0, 0);
+		}
+		else if (overlapY < overlapZ) {
+			info.penetration = overlapY;
+			info.normal = (obj1.position.y < obj2.position.y) ? glm::vec3(0, -1, 0) : glm::vec3(0, 1, 0);
+		}
+		else {
+			info.penetration = overlapZ;
+			info.normal = (obj1.position.z < obj2.position.z) ? glm::vec3(0, 0, -1) : glm::vec3(0, 0, 1);
+		}
+	}
+	
+	return info;
 }
 
-bool checkCollisions(const Rigidbody& obj1, const Rigidbody& obj2) {
+CollisionInfo checkCollisions(const Rigidbody& obj1, const Rigidbody& obj2) {
 	return std::visit([](auto&& s1, auto&& s2) { return checkCollision(s1, s2); }, obj1.shape, obj2.shape);
+}
+
+void resolveCollision(Rigidbody& A, Rigidbody& B, const CollisionInfo& info) {
+	if (!info.collided) return;
+
+	glm::vec3 normal = glm::normalize(info.normal);
+
+	glm::vec3 relativeVelocity = A.velocity - B.velocity;
+
+	float velAlongNormal = glm::dot(relativeVelocity, normal);
+
+	if (velAlongNormal > 0.0f) return;
+
+	float restitution = 1.0f;
+
+	float invMassA = (A.mass > 0.0f) ? (1.0f / A.mass) : 0.0f;
+	float invMassB = (B.mass > 0.0f) ? (1.0f / B.mass) : 0.0f;
+
+	float j = -(1.0f + restitution) * velAlongNormal;
+	j /= (invMassA + invMassB);
+
+	glm::vec3 impulse = j * normal;
+
+	A.velocity += (impulse * invMassA);
+	B.velocity -= (impulse * invMassB);
+
+	const float percent = 0.2f;
+	const float slop = 0.01f;
+
+	glm::vec3 correction = (std::max(info.penetration - slop, 0.0f) / (invMassA + invMassB)) * percent * normal;
+	A.SetPosition(A.GetPosition() - invMassA * correction);
+	B.SetPosition(B.GetPosition() + invMassB * correction);
 }

@@ -7,6 +7,18 @@
 
 #include "shader.h"
 
+struct CollisionInfo {
+    bool collided;
+    glm::vec3 normal;
+    float penetration;
+
+    CollisionInfo(bool collided_ = false, glm::vec3 normal_ = glm::vec3(0.0f, 0.0f, 0.0f), float penetration_ = 0.0f):
+        collided(collided_), normal(normal_), penetration(penetration_)
+    {
+
+    }
+};
+
 struct SphereShape {
     glm::vec3 position;
     float radius;
@@ -30,24 +42,6 @@ struct AABBShape {
         return position + halfSize;
     }
 };
-
-/*
-struct OBBShape {
-    glm::vec3 position;
-    glm::vec3 halfSize;
-    glm::mat3 orientation;
-
-    AABBShape() = default;
-    AABBShape(const glm::vec3& position_, const glm::vec3& size) : position(position_), halfSize(size / 2.0f) {}
-
-    glm::vec3 min() const {
-        return position - halfSize;
-    }
-
-    glm::vec3 max() const {
-        return position + halfSize;
-    }
-};*/
 
 class Object3D
 {
@@ -180,10 +174,10 @@ public:
         mass = mass_;
 
         if (drawElements_) { // sphere
-            shape = SphereShape(position, scale_.x);
+            shape = SphereShape(position_, scale_.x);
         }
         else {
-            shape = AABBShape(position, scale_);
+            shape = AABBShape(position_, scale_);
         }
     }
 
@@ -193,7 +187,7 @@ public:
 
     void PhysicsProcess(float deltaTime) {
         velocity += acceleration * deltaTime;
-        position += velocity;
+        SetPosition(position + velocity);
 
         acceleration = glm::vec3(0.0f);
     }
