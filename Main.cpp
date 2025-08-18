@@ -49,6 +49,7 @@ bool isAPressed = false;
 bool isDPressed = false;
 bool isSpacePressed = false;
 bool pause = false;
+float cubeSpeed = 15.0f;
 
 // Mouse
 double lastX = SCR_WIDTH / 2.0f;
@@ -56,8 +57,14 @@ double lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 
 // Objects
+std::vector<Rigidbody*> physicsObjects;
+
 Camera camera(glm::vec3(0.06f, 0.0f, 16.0f), glm::vec3(0.0f, 1.0f, 0.0f), YAW, PITCH, true, false);
+
 std::vector<Rigidbody> bouncingObjects;
+Rigidbody* ridingCube = nullptr;
+
+glm::vec3 cubeControlPos;
 
 // Timings
 float deltaTime = 0.0f;
@@ -181,7 +188,8 @@ int main() {
 		litShader,
 		sphereVerticesNum,
 		true,
-		4.0 / 3.0 * PI * pow(0.545f, 2) * density));
+		4.0 / 3.0 * PI * pow(0.545f, 2) * density,
+		ObjectType::DYNAMIC));
 
 	bouncingObjects.push_back(Rigidbody(glm::vec3(-6.0f, 7.0f, 0.0f),
 		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
@@ -190,7 +198,8 @@ int main() {
 		litShader,
 		sphereVerticesNum,
 		true,
-		4.0 / 3.0 * PI * pow(0.545f, 2) * density));
+		4.0 / 3.0 * PI * pow(0.545f, 2) * density,
+		ObjectType::DYNAMIC));
 
 	bouncingObjects.push_back(Rigidbody(glm::vec3(-6.0f, 10.0f, 0.0f),
 		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
@@ -199,7 +208,8 @@ int main() {
 		litShader,
 		sphereVerticesNum,
 		true,
-		4.0 / 3.0 * PI * pow(0.545f, 2) * density));
+		4.0 / 3.0 * PI * pow(0.545f, 2) * density,
+		ObjectType::DYNAMIC));
 
 	bouncingObjects.push_back(Rigidbody(glm::vec3(-6.0f, 1.0f, 0.0f),
 		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
@@ -208,7 +218,8 @@ int main() {
 		litShader,
 		sphereVerticesNum,
 		true,
-		4.0 / 3.0 * PI * pow(0.545f, 2) * density));
+		4.0 / 3.0 * PI * pow(0.545f, 2) * density,
+		ObjectType::DYNAMIC));
 
 	bouncingObjects.push_back(Rigidbody(glm::vec3(-10.0f, 4.0f, 0.0f),
 		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
@@ -217,7 +228,8 @@ int main() {
 		litShader,
 		sphereVerticesNum,
 		true,
-		4.0 / 3.0 * PI * pow(0.545f, 2) * density));
+		4.0 / 3.0 * PI * pow(0.545f, 2) * density,
+		ObjectType::DYNAMIC));
 
 	bouncingObjects.push_back(Rigidbody(glm::vec3(6.0f, 4.0f, 0.0f),
 		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
@@ -227,6 +239,7 @@ int main() {
 		36,
 		false,
 		1.0f * density,
+		ObjectType::DYNAMIC,
 		boxDiffuseMap,
 		boxSpecularMap,
 		boxEmissionMap));
@@ -239,6 +252,7 @@ int main() {
 		36,
 		false,
 		1.0f * density,
+		ObjectType::DYNAMIC,
 		boxDiffuseMap,
 		boxSpecularMap,
 		boxEmissionMap));
@@ -251,6 +265,20 @@ int main() {
 		36,
 		false,
 		1.0f * density,
+		ObjectType::DYNAMIC,
+		boxDiffuseMap,
+		boxSpecularMap,
+		boxEmissionMap);
+
+	ridingCube = new Rigidbody(glm::vec3(0.0f, -1.0f, 0.0f),
+		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+		glm::vec3(1.0f, 1.0f, 1.0f),
+		cubeVAO,
+		litTexShader,
+		36,
+		false,
+		1.0f * density,
+		ObjectType::KINEMATIC,
 		boxDiffuseMap,
 		boxSpecularMap,
 		boxEmissionMap);
@@ -262,7 +290,18 @@ int main() {
 		litShader,
 		sphereVerticesNum,
 		true,
-		4.0 / 3.0 * PI * pow(0.545f, 2) * density);
+		4.0 / 3.0 * PI * pow(0.545f, 2) * density,
+		ObjectType::DYNAMIC);
+
+	// Physics Objects
+	for (unsigned int i = 0; i < bouncingObjects.size(); i++)
+	{
+		physicsObjects.push_back(&bouncingObjects[i]);
+	}
+
+	physicsObjects.push_back(&fallingCube);
+	physicsObjects.push_back(&fallingSphere);
+	physicsObjects.push_back(ridingCube);
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -328,26 +367,10 @@ int main() {
 
 		lightCube.Draw();
 
-		// lit cubes
-		for (unsigned int i = 0; i < bouncingObjects.size(); i++)
-		{
-			if(!pause)
-				bouncingObjects[i].ApplyForce(glm::vec3(0.0f, -0.0098f, 0.0f));
-			
-			for (unsigned int j = i + 1; j < bouncingObjects.size(); j++)
-			{
-				CollisionInfo info = checkCollisions(bouncingObjects[i], bouncingObjects[j]);
-
-				if (info.collided) {
-					resolveCollision(bouncingObjects[i], bouncingObjects[j], info);
-				}
-			}
-			
-			if (!pause)
-				bouncingObjects[i].PhysicsProcess(deltaTime);
-
+		// Bouncing Objects
+		for (unsigned int i = 0; i < bouncingObjects.size(); i++) {
 			if (bouncingObjects[i].GetPosition().y <= -1.0f) {
-				if(bouncingObjects[i].velocity.y < 0)
+				if (bouncingObjects[i].velocity.y < 0)
 					bouncingObjects[i].velocity *= -0.9f;
 
 				if (bouncingObjects[i].velocity.y < 0.001f) {
@@ -355,30 +378,12 @@ int main() {
 					bouncingObjects[i].SetRotation(bouncingObjects[i].GetRotation().x, bouncingObjects[i].GetRotation().y, 0.0f);
 				}
 			}
-
-			if (!pause)
-				bouncingObjects[i].SetRotation(bouncingObjects[i].GetRotation().x, bouncingObjects[i].GetRotation().y, bouncingObjects[i].GetRotation().z + rotationPerSecond * deltaTime);
-
-			bouncingObjects[i].Draw();
 		}
 
-		if (!pause) {
-			fallingCube.ApplyForce(glm::vec3(0.0f, -0.0098f, 0.0f));
-			fallingCube.PhysicsProcess(deltaTime);
-			fallingCube.SetRotation(fallingCube.GetRotation().x, fallingCube.GetRotation().y, fallingCube.GetRotation().z + rotationPerSecond * deltaTime);
-		}
-
+		// Resetting Cube and Sphere
 		if (fallingCube.GetPosition().y <= -3.0f) {
 			fallingCube.SetPosition(fallingCube.GetPosition().x, 10.0f + random(5.0f), fallingCube.GetPosition().z);
 			fallingCube.velocity = glm::vec3(0.0f);
-		}
-
-		fallingCube.Draw();
-
-		if (!pause) {
-			fallingSphere.ApplyForce(glm::vec3(0.0f, -0.0098f, 0.0f));
-			fallingSphere.PhysicsProcess(deltaTime);
-			fallingSphere.SetRotation(fallingCube.GetRotation().x, fallingCube.GetRotation().y, fallingCube.GetRotation().z + rotationPerSecond * deltaTime);
 		}
 
 		if (fallingSphere.GetPosition().y <= -3.0f) {
@@ -386,8 +391,27 @@ int main() {
 			fallingSphere.velocity = glm::vec3(0.0f);
 		}
 
+		// General Physics
 
-		fallingSphere.Draw();
+		for (unsigned int i = 0; i < physicsObjects.size(); i++)
+		{
+			if (!pause) {
+				if(physicsObjects[i]->behavior == ObjectType::DYNAMIC)
+					physicsObjects[i]->ApplyForce(glm::vec3(0.0f, -0.0098f, 0.0f));
+
+				for (unsigned int j = i + 1; j < physicsObjects.size(); j++)
+				{
+					CollisionInfo info = checkCollisions(*physicsObjects[i], *physicsObjects[j]);
+
+					if (info.collided) {
+						resolveCollision(*physicsObjects[i], *physicsObjects[j], info);
+					}
+				}
+
+				physicsObjects[i]->PhysicsProcess(deltaTime);
+			}
+			physicsObjects[i]->Draw();
+		}
 
 		floor.shader.use();
 		floor.shader.setVec2("scaleUV", glm::vec2(1000.0f));
@@ -443,6 +467,7 @@ void processInput(GLFWwindow* window)
 		if (!isLeftPressed) {
 			isLeftPressed = true;
 		}
+		ridingCube->SetPosition(ridingCube->GetPosition().x - cubeSpeed * deltaTime, ridingCube->GetPosition().y, ridingCube->GetPosition().z);
 	}
 	else {
 		isLeftPressed = false;
@@ -452,6 +477,7 @@ void processInput(GLFWwindow* window)
 		if (!isRightPressed) {
 			isRightPressed = true;
 		}
+		ridingCube->SetPosition(ridingCube->GetPosition().x + cubeSpeed * deltaTime, ridingCube->GetPosition().y, ridingCube->GetPosition().z);
 	}
 	else {
 		isRightPressed = false;
@@ -482,6 +508,7 @@ void processInput(GLFWwindow* window)
 		if (!isAPressed) {
 			isAPressed = true;
 		}
+		ridingCube->SetPosition(ridingCube->GetPosition().x - cubeSpeed * deltaTime, ridingCube->GetPosition().y, ridingCube->GetPosition().z);
 	}
 	else {
 		isAPressed = false;
@@ -492,6 +519,7 @@ void processInput(GLFWwindow* window)
 		if (!isDPressed) {
 			isDPressed = true;
 		}
+		ridingCube->SetPosition(ridingCube->GetPosition().x + cubeSpeed * deltaTime, ridingCube->GetPosition().y, ridingCube->GetPosition().z);
 	}
 	else {
 		isDPressed = false;
@@ -894,13 +922,19 @@ void resolveCollision(Rigidbody& A, Rigidbody& B, const CollisionInfo& info) {
 
 	glm::vec3 impulse = j * normal;
 
-	A.velocity += (impulse * invMassA);
-	B.velocity -= (impulse * invMassB);
+	if(A.behavior == ObjectType::DYNAMIC)
+		A.velocity += (impulse * invMassA);
+	
+	if (B.behavior == ObjectType::DYNAMIC)
+		B.velocity -= (impulse * invMassB);
 
 	const float percent = 0.2f;
 	const float slop = 0.01f;
 
 	glm::vec3 correction = (std::max(info.penetration - slop, 0.0f) / (invMassA + invMassB)) * percent * normal;
-	A.SetPosition(A.GetPosition() - invMassA * correction);
-	B.SetPosition(B.GetPosition() + invMassB * correction);
+	
+	if (A.behavior == ObjectType::DYNAMIC)
+		A.SetPosition(A.GetPosition() - invMassA * correction);
+	if (B.behavior == ObjectType::DYNAMIC)
+		B.SetPosition(B.GetPosition() + invMassB * correction);
 }

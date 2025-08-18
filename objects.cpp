@@ -7,16 +7,19 @@
 
 #include "shader.h"
 
+enum class ObjectType {
+    DYNAMIC,
+    KINEMATIC,
+    STATIC
+};
+
 struct CollisionInfo {
     bool collided;
     glm::vec3 normal;
     float penetration;
 
     CollisionInfo(bool collided_ = false, glm::vec3 normal_ = glm::vec3(0.0f, 0.0f, 0.0f), float penetration_ = 0.0f):
-        collided(collided_), normal(normal_), penetration(penetration_)
-    {
-
-    }
+        collided(collided_), normal(normal_), penetration(penetration_) {}
 };
 
 struct SphereShape {
@@ -70,6 +73,21 @@ public:
         texture3 = texture3_;
         drawElements = drawElements_;
         drawn = true;
+    }
+
+    Object3D& operator=(const Object3D& other) {
+        if (this == &other) return *this; // self-assignment guard
+
+        this->indexCount = other.indexCount;
+        this->texture1 = other.texture1;
+        this->texture2 = other.texture2;
+        this->texture3 = other.texture3;
+        this->VAO = other.VAO;
+        this->shader = other.shader;
+        this->drawElements = other.drawElements;
+        this->drawn = other.drawn;
+
+        return *this;
     }
 
     glm::mat4 GetModelMatrix() {
@@ -159,6 +177,7 @@ public:
     glm::vec3 velocity;
     float mass;
     std::variant<SphereShape, AABBShape> shape;
+    ObjectType behavior;
 
     Rigidbody(glm::vec3 position_, glm::vec3 rotation_, glm::vec3 scale_,
         unsigned int& VAO_,
@@ -166,12 +185,14 @@ public:
         unsigned int indexCount_,
         bool drawElements_,
         float mass_,
+        ObjectType type_ = ObjectType::DYNAMIC,
         //ShapeType shape_ = SphereShape(glm::vec3(0.0f), -1.0f),
         unsigned int texture1_ = 0, unsigned int texture2_ = 0, unsigned int texture3_ = 0) : Object3D(position_, rotation_, scale_, VAO_, shader_, indexCount_, drawElements_, texture1_, texture2_, texture3_)
     {
         velocity = glm::vec3(0.0f);
         acceleration = glm::vec3(0.0f);
         mass = mass_;
+        behavior = type_;
 
         if (drawElements_) { // sphere
             shape = SphereShape(position_, scale_.x);
@@ -181,11 +202,38 @@ public:
         }
     }
 
+    Rigidbody& operator=(const Rigidbody& other) {
+        if (this == &other) return *this; // self-assignment guard
+
+        this->acceleration = other.acceleration;
+        this->velocity = other.velocity;
+        this->mass = other.mass;
+        this->shape = other.shape;
+        this->behavior = other.behavior;
+
+        this->indexCount = other.indexCount;
+        this->texture1 = other.texture1;
+        this->texture2 = other.texture2;
+        this->texture3 = other.texture3;
+        this->VAO = other.VAO;
+        this->shader = other.shader;
+        this->drawElements = other.drawElements;
+        this->drawn = other.drawn;
+
+        return *this;
+    }
+
     void ApplyForce(const glm::vec3& force) {
+        if (behavior != ObjectType::DYNAMIC)
+            return;
+
         acceleration += force / mass;
     }
 
     void PhysicsProcess(float deltaTime) {
+        if (behavior != ObjectType::DYNAMIC)
+            return;
+
         velocity += acceleration * deltaTime;
         SetPosition(position + velocity);
 
@@ -193,12 +241,18 @@ public:
     }
 
     void SetPosition(glm::vec3 position_) {
+        if (behavior == ObjectType::STATIC)
+            return;
+
         position = position_;
         std::visit([&position_](auto& s) {
             s.position = position_;
         }, shape);
     }
     void SetPosition(float x, float y, float z) {
+        if (behavior == ObjectType::STATIC)
+            return;
+
         position = glm::vec3(x, y, z);
         std::visit([&x, &y, &z](auto& s) {
             s.position = glm::vec3(x, y, z);
