@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef SHADER_H
 #define SHADER_H
 
@@ -146,5 +148,24 @@ private:
             }
         }
     }
+protected:
+    friend bool operator==(const Shader& A, const Shader& B);
+    friend bool operator!=(const Shader& A, const Shader& B);
 };
+
+inline bool operator==(const Shader& A, const Shader& B)
+{
+    if (A == B) return true;
+
+    if (A.ID == B.ID) return true;
+
+    return false;
+}
+
+inline bool operator!=(const Shader& A, const Shader& B)
+{
+    if (A.ID == B.ID) return false;
+
+    return true;
+}
 #endif

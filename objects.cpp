@@ -1,193 +1,148 @@
-#include <glad/glad.h>
-#include "include/glm/glm.hpp"
-#include "include/glm/gtc/matrix_transform.hpp"
-#include "include/glm/gtc/type_ptr.hpp"
+#include "objects.h"
 
-#include <variant>
-
-#include "shader.h"
-
-enum class ObjectType {
-    DYNAMIC,
-    KINEMATIC,
-    STATIC
-};
-
-struct CollisionInfo {
-    bool collided;
-    glm::vec3 normal;
-    float penetration;
-
-    CollisionInfo(bool collided_ = false, glm::vec3 normal_ = glm::vec3(0.0f, 0.0f, 0.0f), float penetration_ = 0.0f):
+#pragma region CollisionInfo Methods
+CollisionInfo::CollisionInfo(bool collided_, glm::vec3 normal_, float penetration_):
         collided(collided_), normal(normal_), penetration(penetration_) {}
-};
+#pragma endregion
 
-struct SphereShape {
-    glm::vec3 position;
-    float radius;
+#pragma region SphereShape Methods
+SphereShape::SphereShape() = default;
+SphereShape::SphereShape(const glm::vec3& position_, const float& radius_) : position(position_), radius(radius_) {}
+#pragma endregion
 
-    SphereShape() = default;
-    SphereShape(const glm::vec3& position_, const float& radius_) : position(position_), radius(radius_) {}
-};
+#pragma region AABBShape Methods
+AABBShape::AABBShape() = default;
+AABBShape::AABBShape(const glm::vec3& position_, const glm::vec3& size) : position(position_), halfSize(size / 2.0f) {}
+glm::vec3 AABBShape::min() const {
+    return position - halfSize;
+}
 
-struct AABBShape {
-    glm::vec3 position;
-    glm::vec3 halfSize;
+glm::vec3 AABBShape::max() const {
+    return position + halfSize;
+}
+#pragma endregion
 
-    AABBShape() = default;
-    AABBShape(const glm::vec3& position_, const glm::vec3& size) : position(position_), halfSize(size / 2.0f) {}
-
-    glm::vec3 min() const {
-        return position - halfSize;
-    }
-
-    glm::vec3 max() const {
-        return position + halfSize;
-    }
-};
-
-class Object3D
+#pragma region Object3D Methods
+Object3D::Object3D(glm::vec3 position_, glm::vec3 rotation_, glm::vec3 scale_,
+    unsigned int& VAO_,
+    Shader& shader_,
+    unsigned int indexCount_,
+    bool drawElements_,
+    unsigned int texture1_, unsigned int texture2_, unsigned int texture3_) : shader(shader_), VAO(VAO_)
 {
-public:
-    unsigned int indexCount;
-    unsigned int texture1, texture2, texture3;
-    unsigned int& VAO;
-
-    Shader& shader;
-    bool drawElements;
-    bool drawn;
-
-    Object3D(glm::vec3 position_, glm::vec3 rotation_, glm::vec3 scale_,
-        unsigned int& VAO_,
-        Shader& shader_,
-        unsigned int indexCount_,
-        bool drawElements_,
-        unsigned int texture1_ = 0, unsigned int texture2_ = 0, unsigned int texture3_ = 0) : shader(shader_), VAO(VAO_)
-    {
-        position = position_;
-        rotation = rotation_;
-        scale = scale_;
-        indexCount = indexCount_;
-        texture1 = texture1_;
-        texture2 = texture2_;
-        texture3 = texture3_;
-        drawElements = drawElements_;
-        drawn = true;
-    }
-
-    Object3D& operator=(const Object3D& other) {
-        if (this == &other) return *this; // self-assignment guard
-
-        this->indexCount = other.indexCount;
-        this->texture1 = other.texture1;
-        this->texture2 = other.texture2;
-        this->texture3 = other.texture3;
-        this->VAO = other.VAO;
-        this->shader = other.shader;
-        this->drawElements = other.drawElements;
-        this->drawn = other.drawn;
-
-        return *this;
-    }
-
-    glm::mat4 GetModelMatrix() {
-        glm::mat4 model = glm::mat4(1.0f);
-
-        model = glm::translate(model, position);
-
-        model = glm::scale(model, scale);
-
-        model = glm::rotate(model, rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
-        model = glm::rotate(model, rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
-        model = glm::rotate(model, rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
-
-        return model;
-    }
-
-    void Draw() {
-        if (!drawn)
-            return;
-
-        shader.use();
-        shader.setMat4("model", GetModelMatrix());
-
-        if (texture1 != 0) {
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, texture1);
-        }
-
-        if (texture2 != 0) {
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, texture2);
-        }
-
-        if (texture3 != 0) {
-            glActiveTexture(GL_TEXTURE2);
-            glBindTexture(GL_TEXTURE_2D, texture3);
-        }
-
-        glBindVertexArray(VAO);
-
-        if (!drawElements) {
-            glDrawArrays(GL_TRIANGLES, 0, indexCount);
-        }
-        else {
-            glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
-        }
-    }
-
-    void SetPosition(glm::vec3 position_) {
-        position = position_;
-    }
-    void SetPosition(float x, float y, float z) {
-        position = glm::vec3(x, y, z);
-    }
-    glm::vec3 GetPosition() {
-        return position;
-    }
-
-    void SetRotation(glm::vec3 rotation_) {
-        rotation = rotation_;
-    }
-    void SetRotation(float x, float y, float z) {
-        rotation = glm::vec3(x, y, z);
-    }
-    glm::vec3 GetRotation() {
-        return rotation;
-    }
-    
-    void SetScale(glm::vec3 scale_) {
-        scale = scale_;
-    }
-    void SetScale(float x, float y, float z) {
-        scale = glm::vec3(x, y, z);
-    }
-    glm::vec3 GetScale() {
-        return scale;
-    }
-protected:
-    glm::vec3 position;
-    glm::vec3 rotation;
-    glm::vec3 scale;
+    position = position_;
+    rotation = rotation_;
+    scale = scale_;
+    indexCount = indexCount_;
+    texture1 = texture1_;
+    texture2 = texture2_;
+    texture3 = texture3_;
+    drawElements = drawElements_;
+    drawn = true;
 };
 
-class Rigidbody : public Object3D {
-public:
-    glm::vec3 acceleration;
-    glm::vec3 velocity;
-    float mass;
-    std::variant<SphereShape, AABBShape> shape;
-    ObjectType behavior;
+Object3D& Object3D::operator=(const Object3D& other) {
+    if (this == &other) return *this; // self-assignment guard
 
-    Rigidbody(glm::vec3 position_, glm::vec3 rotation_, glm::vec3 scale_,
+    this->indexCount = other.indexCount;
+    this->texture1 = other.texture1;
+    this->texture2 = other.texture2;
+    this->texture3 = other.texture3;
+    this->VAO = other.VAO;
+    this->shader = other.shader;
+    this->drawElements = other.drawElements;
+    this->drawn = other.drawn;
+
+    return *this;
+}
+
+glm::mat4 Object3D::GetModelMatrix() {
+    glm::mat4 model = glm::mat4(1.0f);
+
+    model = glm::translate(model, position);
+
+    model = glm::scale(model, scale);
+
+    model = glm::rotate(model, rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
+    model = glm::rotate(model, rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+    model = glm::rotate(model, rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
+
+    return model;
+}
+
+void Object3D::Draw() {
+    if (!drawn)
+        return;
+
+    shader.use();
+    shader.setMat4("model", GetModelMatrix());
+
+    if (texture1 != 0) {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture1);
+    }
+
+    if (texture2 != 0) {
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, texture2);
+    }
+
+    if (texture3 != 0) {
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, texture3);
+    }
+
+    glBindVertexArray(VAO);
+
+    if (!drawElements) {
+        glDrawArrays(GL_TRIANGLES, 0, indexCount);
+    }
+    else {
+        glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
+    }
+}
+
+void Object3D::SetPosition(glm::vec3 position_) {
+    position = position_;
+}
+void Object3D::SetPosition(float x, float y, float z) {
+    position = glm::vec3(x, y, z);
+}
+glm::vec3 Object3D::GetPosition() {
+    return position;
+}
+
+void Object3D::SetRotation(glm::vec3 rotation_) {
+    rotation = rotation_;
+}
+void Object3D::SetRotation(float x, float y, float z) {
+    rotation = glm::vec3(x, y, z);
+}
+glm::vec3 Object3D::GetRotation() {
+    return rotation;
+}
+    
+void Object3D::SetScale(glm::vec3 scale_) {
+    scale = scale_;
+}
+void Object3D::SetScale(float x, float y, float z) {
+    scale = glm::vec3(x, y, z);
+}
+glm::vec3 Object3D::GetScale() {
+    return scale;
+}
+#pragma endregion
+
+#pragma region Rigidbody Methods
+Rigidbody::Rigidbody(glm::vec3 position_, glm::vec3 rotation_, glm::vec3 scale_,
         unsigned int& VAO_,
         Shader& shader_,
         unsigned int indexCount_,
         bool drawElements_,
         float mass_,
-        ObjectType type_ = ObjectType::DYNAMIC,
+        ObjectType type_,
         //ShapeType shape_ = SphereShape(glm::vec3(0.0f), -1.0f),
-        unsigned int texture1_ = 0, unsigned int texture2_ = 0, unsigned int texture3_ = 0) : Object3D(position_, rotation_, scale_, VAO_, shader_, indexCount_, drawElements_, texture1_, texture2_, texture3_)
+        unsigned int texture1_, unsigned int texture2_, unsigned int texture3_) : Object3D(position_, rotation_, scale_, VAO_, shader_, indexCount_, drawElements_, texture1_, texture2_, texture3_)
     {
         velocity = glm::vec3(0.0f);
         acceleration = glm::vec3(0.0f);
@@ -202,7 +157,7 @@ public:
         }
     }
 
-    Rigidbody& operator=(const Rigidbody& other) {
+Rigidbody& Rigidbody::operator=(const Rigidbody& other) {
         if (this == &other) return *this; // self-assignment guard
 
         this->acceleration = other.acceleration;
@@ -223,14 +178,14 @@ public:
         return *this;
     }
 
-    void ApplyForce(const glm::vec3& force) {
+    void Rigidbody::ApplyForce(const glm::vec3& force) {
         if (behavior != ObjectType::DYNAMIC)
             return;
 
         acceleration += force / mass;
     }
 
-    void PhysicsProcess(float deltaTime) {
+    void Rigidbody::PhysicsProcess(float deltaTime) {
         if (behavior != ObjectType::DYNAMIC)
             return;
 
@@ -240,7 +195,7 @@ public:
         acceleration = glm::vec3(0.0f);
     }
 
-    void SetPosition(glm::vec3 position_) {
+    void Rigidbody::SetPosition(glm::vec3 position_) {
         if (behavior == ObjectType::STATIC)
             return;
 
@@ -249,7 +204,7 @@ public:
             s.position = position_;
         }, shape);
     }
-    void SetPosition(float x, float y, float z) {
+    void Rigidbody::SetPosition(float x, float y, float z) {
         if (behavior == ObjectType::STATIC)
             return;
 
@@ -258,11 +213,11 @@ public:
             s.position = glm::vec3(x, y, z);
         }, shape);
     }
-    glm::vec3 GetPosition() {
+    glm::vec3 Rigidbody::GetPosition() {
         return position;
     }
 
-    void SetScale(glm::vec3 scale_) {
+    void Rigidbody::SetScale(glm::vec3 scale_) {
         scale = scale_;
         std::visit([&scale_](auto& s) {
             if constexpr (std::is_same_v<std::decay_t<decltype(shape)>, AABBShape>) {
@@ -273,7 +228,7 @@ public:
             }
         }, shape);
     }
-    void SetScale(float x, float y, float z) {
+    void Rigidbody::SetScale(float x, float y, float z) {
         scale = glm::vec3(x, y, z);
         std::visit([&x, &y, &z](auto& s) {
             if constexpr (std::is_same_v<std::decay_t<decltype(shape)>, AABBShape>) {
@@ -284,7 +239,31 @@ public:
             }
         }, shape);
     }
-    glm::vec3 GetScale() {
+    glm::vec3 Rigidbody::GetScale() {
         return scale;
     }
-};
+#pragma endregion
+
+#pragma region Methods
+
+bool operator==(const Rigidbody& A, const Rigidbody& B)
+{
+    bool same = true;
+
+    if (A.acceleration != B.acceleration) same = false;
+    if (A.velocity != B.velocity) same = false;
+    if (A.mass != B.mass) same = false;
+    //if (A.shape != B.shape) same = false;
+    if (A.behavior != B.behavior) same = false;
+
+    if (A.indexCount != B.indexCount) same = false;
+    if (A.texture1 != B.texture1) same = false;
+    if (A.texture2 != B.texture2) same = false;
+    if (A.texture3 != B.texture3) same = false;
+    if (A.VAO != B.VAO) same = false;
+    if (A.shader != B.shader) same = false;
+    if (A.drawElements != B.drawElements) same = false;
+    if (A.drawn != B.drawn) same = false;
+
+    return same;
+}

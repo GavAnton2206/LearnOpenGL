@@ -8,7 +8,7 @@
 #include "external/stb_image.h"
 #include "shader.h"
 #include "camera.h"
-#include "objects.cpp"
+#include "objects.h"
 
 #include <random>
 #include <iostream>
@@ -31,6 +31,7 @@ CollisionInfo checkCollision(const AABBShape& s1, const AABBShape& s2);
 CollisionInfo checkCollisions(const Rigidbody& obj1, const Rigidbody& obj2);
 
 void resolveCollision(Rigidbody& A, Rigidbody& B, const CollisionInfo& info);
+void resolveSpecialCollision(Rigidbody& A, Rigidbody& B, const CollisionInfo& info);
 
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
@@ -371,7 +372,7 @@ int main() {
 		for (unsigned int i = 0; i < bouncingObjects.size(); i++) {
 			if (bouncingObjects[i].GetPosition().y <= -1.0f) {
 				if (bouncingObjects[i].velocity.y < 0)
-					bouncingObjects[i].velocity *= -0.9f;
+					bouncingObjects[i].velocity.y *= -0.9f;
 
 				if (bouncingObjects[i].velocity.y < 0.001f) {
 					bouncingObjects[i].velocity.y = 0.0f;
@@ -898,15 +899,30 @@ CollisionInfo checkCollision(const AABBShape& obj1, const AABBShape& obj2) {
 }
 
 CollisionInfo checkCollisions(const Rigidbody& obj1, const Rigidbody& obj2) {
+	CollisionInfo info;
+	
+	if(!obj1.canCollide || !obj2.canCollide)
+		return info;
+
 	return std::visit([](auto&& s1, auto&& s2) { return checkCollision(s1, s2); }, obj1.shape, obj2.shape);
 }
 
 void resolveCollision(Rigidbody& A, Rigidbody& B, const CollisionInfo& info) {
 	if (!info.collided) return;
 
+	resolveSpecialCollision(A, B, info);
+
+	if (A.behavior != ObjectType::DYNAMIC && B.behavior != ObjectType::DYNAMIC)
+		return;
+
 	glm::vec3 normal = glm::normalize(info.normal);
 
 	glm::vec3 relativeVelocity = A.velocity - B.velocity;
+
+	if (A.behavior != ObjectType::DYNAMIC)
+		glm::vec3 relativeVelocity = - B.velocity;
+	else if (B.behavior != ObjectType::DYNAMIC)
+		glm::vec3 relativeVelocity = A.velocity;
 
 	float velAlongNormal = glm::dot(relativeVelocity, normal);
 
@@ -937,4 +953,16 @@ void resolveCollision(Rigidbody& A, Rigidbody& B, const CollisionInfo& info) {
 		A.SetPosition(A.GetPosition() - invMassA * correction);
 	if (B.behavior == ObjectType::DYNAMIC)
 		B.SetPosition(B.GetPosition() + invMassB * correction);
+}
+
+void resolveSpecialCollision(Rigidbody& A, Rigidbody& B, const CollisionInfo& info) {
+	if (A == *ridingCube) {
+		B.drawn = false;
+		B.canCollide = false;
+	}
+
+	if (B == *ridingCube) {
+		A.drawn = false;
+		A.canCollide = false;
+	}
 }
