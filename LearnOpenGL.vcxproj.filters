@@ -57,5 +57,14 @@
     <Image Include="assets\textures\awesomeface.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="assets\textures\container2.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\textures\container2_specular.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\textures\container2_emission.jpg">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>
