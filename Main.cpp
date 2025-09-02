@@ -7,11 +7,13 @@
 
 #include "external/stb_image.h"
 #include "shader.h"
+#include "light.h"
 #include "camera.h"
 
 #include <random>
 #include <iostream>
 #include <string>
+#include <vector>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window, Shader& shader);
@@ -38,8 +40,15 @@ double lastX = SCR_WIDTH / 2.0f;
 double lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 
-// Settings
+// Objects
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+DirectionLight dirLight(glm::vec3(-0.2f, -1.0f, -0.3f), glm::vec3(0.05f, 0.05f, 0.05f), 
+						glm::vec3(0.4f, 0.4f, 0.4f), glm::vec3(0.5f, 0.5f, 0.5f));
+SpotLight spotLights[1]; // NR_POINT_LIGHTS
+PointLight pointLights[1]; // NR_SPOT_LIGHTS
+
+Shader litShader;
+Shader lightShader;
 
 // Timings
 float deltaTime = 0.0f;
@@ -52,7 +61,8 @@ float currentRotation = 0.0f;
 float lastRotationTime = 0.0f;
 
 // Light Control
-glm::vec3 lightPos(1.2f, 1.0f, -2.0f);
+glm::vec3 lightPos;
+float lightOrbitRadius = 10.0f;
 
 double random(float randomMax = 1.0f) {
 	return randomMax * (double)rand() / (double)RAND_MAX;
@@ -90,9 +100,25 @@ int main() {
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	// ---------------------------------
+	// light creation
+	glm::vec3 ambient = glm::vec3(0.0f);
+
+	glm::vec3 red = glm::vec3(1.0f, 0.0f, 0.0f);
+	glm::vec3 diffuseFlashlight = red * glm::vec3(2.0f);
+
+	glm::vec3 white = glm::vec3(1.0f, 1.0f, 1.0f);
+	glm::vec3 diffuseLamp = white * glm::vec3(10.0f);
+
+	spotLights[0] = SpotLight(0, glm::cos(glm::radians(5.5f)), glm::cos(glm::radians(8.5f)),
+							  ambient, diffuseFlashlight, glm::vec3(1.0f, 1.0f, 1.0f),
+							  camera.Position, camera.Front);
+
+	pointLights[0] = PointLight(0, 1.0f, ambient, diffuseLamp, glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f));
+
+	// ---------------------------------
 	// shaders file translation
-	Shader litShader("assets/shaders/lit/VertexShader.vert", "assets/shaders/lit/FragmentShader.frag");
-	Shader lightShader("assets/shaders/lighting/VertexShader.vert", "assets/shaders/lighting/FragmentShader.frag");
+	litShader = Shader("assets/shaders/lit/VertexShader.vert", "assets/shaders/lit/FragmentShader.frag");
+	lightShader = Shader("assets/shaders/lighting/VertexShader.vert", "assets/shaders/lighting/FragmentShader.frag");
 
 	// --------------------------------
 	// texture
@@ -103,7 +129,7 @@ int main() {
 	litShader.use();
 
 	// -----------------------------------
-	// textures
+	// shaders settings
 	litShader.setFloat("mix", mix);
 	
 	litShader.setInt("material.diffuse", 0);
@@ -112,9 +138,14 @@ int main() {
 	litShader.setVec3("material.specular", 0.50196078f, 0.50196078f, 0.50196078f);
 	litShader.setFloat("material.shininess", 32.0f);
 
-	litShader.setVec3("spotLights[0].ambient", 1.0f, 1.0f, 1.0f);
-	litShader.setVec3("spotLights[0].diffuse", 1.0f, 1.0f, 1.0f);
-	litShader.setVec3("spotLights[0].specular", 1.0f, 1.0f, 1.0f);
+	// light
+	dirLight.Setup(litShader);
+	for (auto it = std::begin(spotLights); it != std::end(spotLights); ++it ) {
+		it->SetupShader(litShader);
+	}
+	for (auto it = std::begin(pointLights); it != std::end(pointLights); ++it) {
+		it->SetupShader(litShader);
+	}
 
 	//----------------------------------
 	// transform
@@ -241,21 +272,15 @@ int main() {
 		glBindTexture(GL_TEXTURE_2D, emissionMap);
 
 		// light
-		glm::vec3 lightColor = glm::vec3(1.0f);
-		/*
-		lightColor.x = sin(glfwGetTime() * 2.0f);
-		lightColor.y = sin(glfwGetTime() * 0.7f);
-		lightColor.z = sin(glfwGetTime() * 1.3f);*/
+		float lightX = sin(glfwGetTime()) * lightOrbitRadius;
+		float lightZ = cos(glfwGetTime()) * lightOrbitRadius;
+		lightPos = glm::vec3(lightX, 0.0f, lightZ);
 
-		const float radius = 10.0f;
-		float lightX = sin(glfwGetTime()) * radius;
-		float lightZ = cos(glfwGetTime()) * radius;
-		lightPos = glm::vec3(lightX, lightPos.y, lightZ);
-
+		// light cube
 		lightShader.use();
 		lightShader.setMat4("view", view);
 		lightShader.setMat4("projection", projection);
-		lightShader.setVec3("lightColor", lightColor);
+		lightShader.setVec3("lightColor", white);
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, lightPos);
 		model = glm::scale(model, glm::vec3(0.2f));
@@ -264,28 +289,25 @@ int main() {
 		glBindVertexArray(lightVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
-		// usage
+		// lit shader
 		litShader.use();
 		litShader.setMat4("view", view);
 		litShader.setMat4("projection", projection);
 		litShader.setVec3("viewPos", camera.Position);
 
-		glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f);
-		glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f);
+		spotLights[0].position = camera.Position;
+		spotLights[0].direction = camera.Front;
 
-		litShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-		litShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
-		litShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
-		litShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
+		pointLights[0].position = lightPos;
 
-		litShader.setVec3("spotLights[0].position", camera.Position);
-		litShader.setVec3("spotLights[0].direction", camera.Front);
-		litShader.setFloat("spotLights[0].cutOff", glm::cos(glm::radians(5.5f)));
-		litShader.setFloat("spotLights[0].outerCutOff", glm::cos(glm::radians(8.5f)));
+		for (auto it = std::begin(spotLights); it != std::end(spotLights); ++it) {
+			it->UpdateShader(litShader);
+		}
+		for (auto it = std::begin(pointLights); it != std::end(pointLights); ++it) {
+			it->UpdateShader(litShader);
+		}
 
-		litShader.setVec3("spotLights[0].ambient", ambientColor);
-		litShader.setVec3("spotLights[0].diffuse", diffuseColor);
-
+		// mesh rendering
 		glBindVertexArray(litVAO);
 		for (unsigned int i = 0; i < sizeof(cubePositions)/sizeof(cubePositions[0]); i++)
 		{
@@ -319,11 +341,9 @@ void processInput(GLFWwindow* window, Shader& shader)
 	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
 		if (!isUpPressed) {
 			isUpPressed = true;
-			mix += 0.1f;
-			if (mix > 1)
-				mix = 1;
-			shader.setFloat("mix", mix);
-			shader.use();
+			litShader.use();
+			spotLights[0].diffuse.r += 1.0f;
+			spotLights[0].SetupShader(litShader);
 		}
 	}
 	else {
@@ -333,11 +353,9 @@ void processInput(GLFWwindow* window, Shader& shader)
 	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
 		if (!isDownPressed) {
 			isDownPressed = true;
-			mix -= 0.1f;
-			if (mix < 0)
-				mix = 0;
-			shader.setFloat("mix", mix);
-			shader.use();
+			litShader.use();
+			spotLights[0].diffuse.r -= 1.0f;
+			spotLights[0].SetupShader(litShader);
 		}
 	}
 	else {
@@ -346,12 +364,8 @@ void processInput(GLFWwindow* window, Shader& shader)
 
 	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
 		if (!isLeftPressed) {
-			isDownPressed = true;
-			if (rotationSpeed < 0.0f) {
-				currentRotation += rotationSpeed * ((float)glfwGetTime() - lastRotationTime);
-				lastRotationTime = (float)glfwGetTime();
-				rotationSpeed *= -1;
-			}
+			isLeftPressed = true;
+			lightOrbitRadius -= 0.5f;
 		}
 	}
 	else {
@@ -361,11 +375,7 @@ void processInput(GLFWwindow* window, Shader& shader)
 	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
 		if (!isRightPressed) {
 			isRightPressed = true;
-			if (rotationSpeed > 0.0f) {
-				currentRotation += rotationSpeed * ((float)glfwGetTime() - lastRotationTime);
-				lastRotationTime = (float)glfwGetTime();
-				rotationSpeed *= -1;
-			}
+			lightOrbitRadius += 0.5f;
 		}
 	}
 	else {
@@ -412,8 +422,9 @@ void processInput(GLFWwindow* window, Shader& shader)
 		isDPressed = false;
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, true);
+	}
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {

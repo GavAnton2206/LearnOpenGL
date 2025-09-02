@@ -170,6 +170,7 @@
   <ItemGroup>
     <ClInclude Include="camera.h" />
     <ClInclude Include="external\stb_image.h" />
+    <ClInclude Include="light.h" />
     <ClInclude Include="shader.h" />
   </ItemGroup>
   <ItemGroup>
