@@ -21,14 +21,20 @@ public:
                    glm::vec3 diffuse_ = glm::vec3(0.0f), glm::vec3 specular_ = glm::vec3(0.0f)) :
                    direction(dir_), ambient(ambient_), diffuse(diffuse_), specular(specular_), shown(true), isShowing(true) {}
 
-    void Setup(Shader& shader) {
+    void Setup(Shader& shader, bool use = false) {
+        if (use)
+            shader.use();
+
         shader.setVec3("dirLight.direction", direction);
         shader.setVec3("dirLight.ambient", ambient);
         shader.setVec3("dirLight.diffuse", diffuse);
         shader.setVec3("dirLight.specular", specular);
     }
 
-    void Update(Shader& shader) {
+    void Update(Shader& shader, bool use = false) {
+        if (use)
+            shader.use();
+
         if (isShowing && !shown) {
             shader.setVec3("dirLight.ambient", glm::vec3(0.0f, 0.0f, 0.0f));
             shader.setVec3("dirLight.diffuse", glm::vec3(0.0f, 0.0f, 0.0f));
@@ -68,7 +74,10 @@ public:
               glm::vec3 dir_ = glm::vec3(0.0f)) :
         id(id_), cutOff(cutOff_), outerCutOff(outerCutOff_), direction(dir_), position(position_), ambient(ambient_), diffuse(diffuse_), specular(specular_), shown(true), isShowing(true) {}
 
-    void SetupShader(Shader& shader, int id_ = -1) {
+    void Setup(Shader& shader, bool use = false, int id_ = -1) {
+        if (use)
+            shader.use();
+
         std::string Id;
         if(id_ == -1)
             Id = "spotLights[" + std::to_string(id) + "].";
@@ -86,7 +95,10 @@ public:
         shader.setVec3(Id + "specular", specular);
     }
 
-    void UpdateShader(Shader& shader, int id_ = -1) {
+    void Update(Shader& shader, bool use = false, int id_ = -1) {
+        if (use)
+            shader.use();
+
         std::string Id;
         if (id_ == -1)
             Id = "spotLights[" + std::to_string(id) + "].";
@@ -148,7 +160,10 @@ public:
         //quadratic = (1 - radiusLight) / radiusLight * (1 / pow(radius, 2));
     }
 
-    void SetupShader(Shader& shader, int id_ = -1) {
+    void Setup(Shader& shader, bool use = false, int id_ = -1) {
+        if (use)
+            shader.use();
+
         std::string Id;
         if (id_ == -1)
             Id = "pointLights[" + std::to_string(id) + "].";
@@ -166,7 +181,10 @@ public:
         shader.setVec3(Id + "specular", specular);
     }
 
-    void UpdateShader(Shader& shader, int id_ = -1) {
+    void Update(Shader& shader, bool use = false, int id_ = -1) {
+        if (use)
+            shader.use();
+
         std::string Id;
         if (id_ == -1)
             Id = "pointLights[" + std::to_string(id) + "].";

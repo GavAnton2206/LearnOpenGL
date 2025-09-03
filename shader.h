@@ -1,5 +1,4 @@
-#ifndef SHADER_H
-#define SHADER_H
+#pragma once
 
 #include <glad/glad.h>
 
@@ -16,11 +15,8 @@ class Shader
 {
 public:
     unsigned int ID;
-    // constructor generates the shader on the fly
-    // ------------------------------------------------------------------------
-    Shader() {
-        ID = -1;
-    }
+
+    Shader() = default;
 
     Shader(const char* vertexPath, const char* fragmentPath)
     {
@@ -109,6 +105,16 @@ public:
         glUniform3fv(glGetUniformLocation(ID, name.c_str()), 1, glm::value_ptr(value));
     }
     // ------------------------------------------------------------------------
+    void setVec2(const std::string& name, glm::vec2 value) const
+    {
+        glUniform2fv(glGetUniformLocation(ID, name.c_str()), 1, glm::value_ptr(value));
+    }
+    void setVec2(const std::string& name, float x, float y) const
+    {
+        glm::vec2 value = glm::vec2(x, y);
+        glUniform2fv(glGetUniformLocation(ID, name.c_str()), 1, glm::value_ptr(value));
+    }
+    // ------------------------------------------------------------------------
     void setFloat(const std::string& name, float value) const
     {
         glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
@@ -140,5 +146,23 @@ private:
             }
         }
     }
+protected:
+    friend bool operator==(const Shader& A, const Shader& B);
+    friend bool operator!=(const Shader& A, const Shader& B);
 };
-#endif
+
+inline bool operator==(const Shader& A, const Shader& B)
+{
+    if (A == B) return true;
+
+    if (A.ID == B.ID) return true;
+
+    return false;
+}
+
+inline bool operator!=(const Shader& A, const Shader& B)
+{
+    if (A.ID == B.ID) return false;
+
+    return true;
+}
