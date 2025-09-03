@@ -129,11 +129,14 @@ int main() {
 	// light creation
 	glm::vec3 ambient = glm::vec3(0.0f);
 
-	glm::vec3 red = glm::vec3(1.0f, 0.0f, 0.0f);
+	glm::vec3 red = glm::vec3(1.0f, 0.0f, 1.0f);
 	glm::vec3 diffuseFlashlight = red * glm::vec3(2.0f);
 
 	glm::vec3 white = glm::vec3(1.0f, 1.0f, 1.0f);
-	glm::vec3 diffuseLamp = white * glm::vec3(10.0f);
+	glm::vec3 diffuseLamp = white * glm::vec3(2.0f);
+
+	dirLight = DirectionLight(glm::vec3(-0.2f, -1.0f, -0.3f), glm::vec3(0.1f),
+		glm::vec3(0.4f, 0.4f, 0.4f), glm::vec3(0.5f, 0.5f, 0.5f));
 
 	spotLights[0] = SpotLight(0, glm::cos(glm::radians(5.5f)), glm::cos(glm::radians(8.5f)),
 		ambient, diffuseFlashlight, glm::vec3(1.0f, 1.0f, 1.0f),
@@ -171,10 +174,10 @@ int main() {
 	// lit shader
 	litShader.use();
 
-	litShader.setVec3("material.diffuse", glm::vec3(0.699f, 0.704f, 0.671f));
-	litShader.setVec3("material.specular", glm::vec3(0.731f, 0.775f, 0.715f));
+	litShader.setVec3("material.diffuse", glm::vec3(0.5f));
+	litShader.setVec3("material.specular", glm::vec3(0.0f));
 	litShader.setVec3("material.emission", glm::vec3(0.0f));
-	litShader.setFloat("material.shininess", 4.0f);
+	litShader.setFloat("material.shininess", 32.0f);
 
 	// ---------------------------------
 	// light setup
@@ -210,17 +213,6 @@ int main() {
 		36,
 		false);
 
-	Object3D Cube = Object3D(glm::vec3(0.0f, 0.0f, 0.0f),
-		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
-		glm::vec3(1.0f),
-		cubeVAO,
-		litTexShader,
-		36,
-		false,
-		boxDiffuseMap,
-		boxSpecularMap,
-		boxEmissionMap);
-
 	Object3D floor = Object3D(glm::vec3(0.0f, -1.55f, 0.0f),
 		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
 		glm::vec3(1000.0f, 0.01f, 1000.00f),
@@ -230,9 +222,11 @@ int main() {
 		false,
 		boardsDiffuseMap,
 		boardsSpecularMap,
-		boardsEmissionMap);
+		boardsEmissionMap,
+		glm::vec2(1000.0f));
 
 	float density = 1.0f;
+	glm::vec3 sphereColor = glm::vec3(1.0f, 1.0f, 0.0f);
 
 	bouncingObjects.push_back(Rigidbody(glm::vec3(-6.0f, 3.0f, 0.0f),
 		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
@@ -242,7 +236,7 @@ int main() {
 		sphereVerticesNum,
 		true,
 		4.0 / 3.0 * PI * pow(0.545f, 2) * density,
-		ObjectType::DYNAMIC));
+		ObjectType::DYNAMIC, 0, 0, 0, glm::vec2(0.0f), sphereColor));
 
 	bouncingObjects.push_back(Rigidbody(glm::vec3(-6.0f, 7.0f, 0.0f),
 		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
@@ -252,7 +246,7 @@ int main() {
 		sphereVerticesNum,
 		true,
 		4.0 / 3.0 * PI * pow(0.545f, 2) * density,
-		ObjectType::DYNAMIC));
+		ObjectType::DYNAMIC, 0, 0, 0, glm::vec2(0.0f), sphereColor));
 
 	bouncingObjects.push_back(Rigidbody(glm::vec3(-6.0f, 10.0f, 0.0f),
 		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
@@ -262,7 +256,7 @@ int main() {
 		sphereVerticesNum,
 		true,
 		4.0 / 3.0 * PI * pow(0.545f, 2) * density,
-		ObjectType::DYNAMIC));
+		ObjectType::DYNAMIC, 0, 0, 0, glm::vec2(0.0f), sphereColor));
 
 	bouncingObjects.push_back(Rigidbody(glm::vec3(-6.0f, 1.0f, 0.0f),
 		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
@@ -272,7 +266,7 @@ int main() {
 		sphereVerticesNum,
 		true,
 		4.0 / 3.0 * PI * pow(0.545f, 2) * density,
-		ObjectType::DYNAMIC));
+		ObjectType::DYNAMIC, 0, 0, 0, glm::vec2(0.0f), sphereColor));
 
 	bouncingObjects.push_back(Rigidbody(glm::vec3(-10.0f, 4.0f, 0.0f),
 		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
@@ -282,7 +276,7 @@ int main() {
 		sphereVerticesNum,
 		true,
 		4.0 / 3.0 * PI * pow(0.545f, 2) * density,
-		ObjectType::DYNAMIC));
+		ObjectType::DYNAMIC, 0, 0, 0, glm::vec2(0.0f), sphereColor));
 
 	bouncingObjects.push_back(Rigidbody(glm::vec3(6.0f, 4.0f, 0.0f),
 		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
@@ -344,7 +338,7 @@ int main() {
 		sphereVerticesNum,
 		true,
 		4.0 / 3.0 * PI * pow(0.545f, 2) * density,
-		ObjectType::DYNAMIC);
+		ObjectType::DYNAMIC, 0, 0, 0, glm::vec2(0.0f), sphereColor);
 
 	// Physics Objects
 	for (unsigned int i = 0; i < bouncingObjects.size(); i++)
@@ -402,15 +396,15 @@ int main() {
 
 		int j = 0;
 		for (auto it = std::begin(spotLights); it != std::end(spotLights); ++it, j++) {
-			it->Update(litShader, j, true);
-			it->Update(litTexShader, true);
-			it->Update(lightShader, j, true);
+			it->Update(litShader, true, j);
+			it->Update(litTexShader, true, j);
+			it->Update(lightShader, true, j);
 		}
 		j = 0;
 		for (auto it = std::begin(pointLights); it != std::end(pointLights); ++it, j++) {
-			it->Update(litShader, j, true);
-			it->Update(litTexShader, true);
-			it->Update(lightShader, j, true);
+			it->Update(litShader, true, j);
+			it->Update(litTexShader, true, j);
+			it->Update(lightShader, true, j);
 		}
 
 
@@ -424,12 +418,11 @@ int main() {
 
 		lightCube.Draw();
 
-		Cube.Draw();
-
 		// Bouncing Objects
+	
 		for (unsigned int i = 0; i < bouncingObjects.size(); i++) {
 			if (bouncingObjects[i].GetPosition().y <= -1.0f) {
-				if (bouncingObjects[i].velocity.y < 0)
+				if (bouncingObjects[i].GetPosition().y < 0)
 					bouncingObjects[i].velocity.y *= -0.9f;
 
 				if (bouncingObjects[i].velocity.y < 0.001f) {
@@ -455,10 +448,9 @@ int main() {
 		for (unsigned int i = 0; i < physicsObjects.size(); i++)
 		{
 			if (!pause) {
-				/*
 				if (physicsObjects[i]->behavior == ObjectType::DYNAMIC)
 					physicsObjects[i]->ApplyForce(glm::vec3(0.0f, -0.0098f, 0.0f));
-
+				/*
 				for (unsigned int j = i + 1; j < physicsObjects.size(); j++)
 				{
 					CollisionInfo info = checkCollisions(*physicsObjects[i], *physicsObjects[j]);
@@ -470,13 +462,10 @@ int main() {
 
 				physicsObjects[i]->PhysicsProcess(deltaTime);
 			}
-			//physicsObjects[i]->Draw();
+			physicsObjects[i]->Draw();
 		}
 
-		floor.shader.use();
-		floor.shader.setVec2("scaleUV", glm::vec2(1000.0f));
-		//floor.Draw();
-		floor.shader.setVec2("scaleUV", glm::vec2(1.0f));
+		floor.Draw();
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -503,7 +492,7 @@ void processInput(GLFWwindow* window)
 		if (!isUpPressed) {
 			isUpPressed = true;
 			spotLights[0].diffuse.r += 1.0f;
-			spotLights[0].Setup(litShader, true);
+			spotLights[0].Setup(litTexShader, true);
 		}
 	}
 	else {
@@ -515,7 +504,7 @@ void processInput(GLFWwindow* window)
 			isDownPressed = true;
 			litShader.use();
 			spotLights[0].diffuse.r -= 1.0f;
-			spotLights[0].Setup(litShader, true);
+			spotLights[0].Setup(litTexShader, true);
 		}
 	}
 	else {

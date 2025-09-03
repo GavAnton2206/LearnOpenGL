@@ -28,7 +28,9 @@ Object3D::Object3D(glm::vec3 position_, glm::vec3 rotation_, glm::vec3 scale_,
     Shader& shader_,
     unsigned int indexCount_,
     bool drawElements_,
-    unsigned int texture1_, unsigned int texture2_, unsigned int texture3_) : shader(shader_), VAO(VAO_)
+    unsigned int texture1_, unsigned int texture2_, unsigned int texture3_, 
+    glm::vec2 UVScale_, glm::vec3 color_) : 
+    shader(shader_), VAO(VAO_), UVScale(UVScale_), color(color_)
 {
     position = position_;
     rotation = rotation_;
@@ -76,6 +78,7 @@ void Object3D::Draw() {
 
     shader.use();
     shader.setMat4("model", GetModelMatrix());
+    shader.setVec2("scaleUV", UVScale);
 
     if (texture1 != 0) {
         glActiveTexture(GL_TEXTURE0);
@@ -90,6 +93,11 @@ void Object3D::Draw() {
     if (texture3 != 0) {
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, texture3);
+    }
+
+    if (texture1 == 0 && texture2 == 0 && texture3 == 0) {
+        //shader.setVec3("material.ambient", color);
+        shader.setVec3("material.diffuse", color);
     }
 
     glBindVertexArray(VAO);
@@ -142,7 +150,9 @@ Rigidbody::Rigidbody(glm::vec3 position_, glm::vec3 rotation_, glm::vec3 scale_,
     float mass_,
     ObjectType type_,
     //ShapeType shape_ = SphereShape(glm::vec3(0.0f), -1.0f),
-    unsigned int texture1_, unsigned int texture2_, unsigned int texture3_) : Object3D(position_, rotation_, scale_, VAO_, shader_, indexCount_, drawElements_, texture1_, texture2_, texture3_)
+    unsigned int texture1_, unsigned int texture2_, unsigned int texture3_,
+    glm::vec2 UVScale, glm::vec3 color) : 
+    Object3D(position_, rotation_, scale_, VAO_, shader_, indexCount_, drawElements_, texture1_, texture2_, texture3_, UVScale, color)
 {
     velocity = glm::vec3(0.0f);
     acceleration = glm::vec3(0.0f);

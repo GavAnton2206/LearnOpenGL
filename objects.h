@@ -47,6 +47,8 @@ class Object3D
 public:
     unsigned int indexCount;
     unsigned int texture1, texture2, texture3;
+    glm::vec3 color;
+    glm::vec2 UVScale;
     unsigned int& VAO;
     bool drawn;
 
@@ -58,7 +60,8 @@ public:
         Shader& shader_,
         unsigned int indexCount_,
         bool drawElements_,
-        unsigned int texture1_ = 0, unsigned int texture2_ = 0, unsigned int texture3_ = 0);
+        unsigned int texture1_ = 0, unsigned int texture2_ = 0, unsigned int texture3_ = 0, 
+        glm::vec2 UVScale_ = glm::vec2(1.0f), glm::vec3 color_ = glm::vec3(1.0f));
 
     Object3D& operator=(const Object3D& other);
 
@@ -100,7 +103,8 @@ public:
         float mass_,
         ObjectType type_ = ObjectType::DYNAMIC,
         //ShapeType shape_ = SphereShape(glm::vec3(0.0f), -1.0f),
-        unsigned int texture1_ = 0, unsigned int texture2_ = 0, unsigned int texture3_ = 0);
+        unsigned int texture1_ = 0, unsigned int texture2_ = 0, unsigned int texture3_ = 0,
+        glm::vec2 UVScale = glm::vec2(1.0f), glm::vec3 color = glm::vec3(0.0f));
 
     Rigidbody& operator=(const Rigidbody& other);
 
