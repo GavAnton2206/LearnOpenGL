@@ -450,7 +450,7 @@ int main() {
 			if (!pause) {
 				if (physicsObjects[i]->behavior == ObjectType::DYNAMIC)
 					physicsObjects[i]->ApplyForce(glm::vec3(0.0f, -0.0098f, 0.0f));
-				/*
+				
 				for (unsigned int j = i + 1; j < physicsObjects.size(); j++)
 				{
 					CollisionInfo info = checkCollisions(*physicsObjects[i], *physicsObjects[j]);
@@ -458,7 +458,7 @@ int main() {
 					if (info.collided) {
 						resolveCollision(*physicsObjects[i], *physicsObjects[j], info);
 					}
-				}*/
+				}
 
 				physicsObjects[i]->PhysicsProcess(deltaTime);
 			}
@@ -514,8 +514,8 @@ void processInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
 		if (!isLeftPressed) {
 			isLeftPressed = true;
-			lightOrbitRadius -= 0.5f;
 		}
+		ridingCube->SetPosition(ridingCube->GetPosition().x - cubeSpeed * deltaTime, ridingCube->GetPosition().y, ridingCube->GetPosition().z);
 	}
 	else {
 		isLeftPressed = false;
@@ -524,8 +524,8 @@ void processInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
 		if (!isRightPressed) {
 			isRightPressed = true;
-			lightOrbitRadius += 0.5f;
 		}
+		ridingCube->SetPosition(ridingCube->GetPosition().x + cubeSpeed * deltaTime, ridingCube->GetPosition().y, ridingCube->GetPosition().z);
 	}
 	else {
 		isRightPressed = false;
@@ -984,12 +984,12 @@ void resolveCollision(Rigidbody& A, Rigidbody& B, const CollisionInfo& info) {
 
 void resolveSpecialCollision(Rigidbody& A, Rigidbody& B, const CollisionInfo& info) {
 	if (A == *ridingCube) {
-		B.drawn = false;
-		B.canCollide = false;
+		//B.drawn = false;
+		//B.canCollide = false;
 	}
 
 	if (B == *ridingCube) {
-		A.drawn = false;
-		A.canCollide = false;
+		//A.drawn = false;
+		//A.canCollide = false;
 	}
 }
