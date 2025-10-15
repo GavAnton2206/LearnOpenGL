@@ -163,6 +163,7 @@
     <ClCompile Include="objects.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="assets\shaders\depth\LinearDepth.frag" />
     <None Include="assets\shaders\gourand\FragmentShader.frag" />
     <None Include="assets\shaders\lighting\FragmentShader.frag" />
     <None Include="assets\shaders\lit\FragmentShader.frag" />

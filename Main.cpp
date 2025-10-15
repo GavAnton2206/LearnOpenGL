@@ -146,8 +146,9 @@ int main() {
 
 	// ---------------------------------
 	// shaders file translation
-	litShader = Shader("assets/shaders/lit/VertexShader.vert", "assets/shaders/lit/FragmentShader.frag");
-	litTexShader = Shader("assets/shaders/lit/VertexShaderTex.vert", "assets/shaders/lit/FragmentShaderTex.frag");
+	litShader = Shader("assets/shaders/lit/VertexShader.vert", "assets/shaders/depth/LinearDepth.frag");
+	//litTexShader = Shader("assets/shaders/lit/VertexShaderTex.vert", "assets/shaders/lit/FragmentShaderTex.frag");
+	litTexShader = Shader("assets/shaders/lit/VertexShaderTex.vert", "assets/shaders/depth/LinearDepth.frag");
 	lightShader = Shader("assets/shaders/lighting/VertexShader.vert", "assets/shaders/lighting/FragmentShader.frag");
 
 	// --------------------------------
@@ -491,8 +492,7 @@ void processInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
 		if (!isUpPressed) {
 			isUpPressed = true;
-			spotLights[0].diffuse.r += 1.0f;
-			spotLights[0].Setup(litTexShader, true);
+			glDepthFunc(GL_LEQUAL);
 		}
 	}
 	else {
@@ -502,9 +502,7 @@ void processInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
 		if (!isDownPressed) {
 			isDownPressed = true;
-			litShader.use();
-			spotLights[0].diffuse.r -= 1.0f;
-			spotLights[0].Setup(litTexShader, true);
+			glDepthFunc(GL_NOTEQUAL);
 		}
 	}
 	else {
