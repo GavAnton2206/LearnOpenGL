@@ -139,6 +139,7 @@ void Object3D::SetScale(float x, float y, float z) {
 glm::vec3 Object3D::GetScale() {
     return scale;
 }
+
 #pragma endregion
 
 #pragma region Rigidbody Methods

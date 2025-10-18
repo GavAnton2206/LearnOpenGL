@@ -32,6 +32,8 @@ CollisionInfo checkCollision(const AABBShape& s1, const SphereShape& s2);
 CollisionInfo checkCollision(const AABBShape& s1, const AABBShape& s2);
 CollisionInfo checkCollisions(const Rigidbody& obj1, const Rigidbody& obj2);
 
+void DrawWithOutline(Object3D obj, Shader& shader_, glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f));
+
 void resolveCollision(Rigidbody& A, Rigidbody& B, const CollisionInfo& info);
 void resolveSpecialCollision(Rigidbody& A, Rigidbody& B, const CollisionInfo& info);
 
@@ -44,6 +46,7 @@ const float rotationPerSecond = 0.25f;
 // Keys
 bool isUpPressed = false;
 bool isDownPressed = false;
+bool isEnterPressed = false;
 bool isLeftPressed = false;
 bool isRightPressed = false;
 bool isWPressed = false;
@@ -71,6 +74,7 @@ PointLight pointLights[1]; // NR_SPOT_LIGHTS
 Shader litShader;
 Shader litTexShader;
 Shader lightShader;
+Shader colorShader;
 
 std::vector<Rigidbody> bouncingObjects;
 Rigidbody* ridingCube = nullptr;
@@ -85,6 +89,7 @@ float lastFrame = 0.0f;
 float rotationSpeed = glm::radians(50.0f);
 float currentRotation = 0.0f;
 float lastRotationTime = 0.0f;
+bool showOutline = false;
 
 // Light Control
 glm::vec3 lightPos;
@@ -146,10 +151,11 @@ int main() {
 
 	// ---------------------------------
 	// shaders file translation
-	litShader = Shader("assets/shaders/lit/VertexShader.vert", "assets/shaders/depth/LinearDepth.frag");
+	litShader = Shader("assets/shaders/lit/VertexShader.vert", "assets/shaders/lit/FragmentShader.frag");
 	//litTexShader = Shader("assets/shaders/lit/VertexShaderTex.vert", "assets/shaders/lit/FragmentShaderTex.frag");
-	litTexShader = Shader("assets/shaders/lit/VertexShaderTex.vert", "assets/shaders/depth/LinearDepth.frag");
+	litTexShader = Shader("assets/shaders/lit/VertexShaderTex.vert", "assets/shaders/lit/FragmentShaderTex.frag");
 	lightShader = Shader("assets/shaders/lighting/VertexShader.vert", "assets/shaders/lighting/FragmentShader.frag");
+	colorShader = Shader("assets/shaders/unlit/VertexShader.vert", "assets/shaders/unlit/FragmentShader.frag");
 
 	// --------------------------------
 	// texture
@@ -352,6 +358,7 @@ int main() {
 	physicsObjects.push_back(ridingCube);
 
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_STENCIL_TEST);
 
 	// --------------------------------------------------------------------------
 	while (!glfwWindowShouldClose(window))
@@ -366,13 +373,19 @@ int main() {
 
 		// background color
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		
+		glEnable(GL_DEPTH_TEST);
+		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 
 		// matrices
 		glm::mat4 model;
 		glm::mat4 view = camera.GetViewMatrix();
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+
+		glStencilMask(0x00);
+		floor.Draw();
 
 		// light and shaders
 		lightShader.use();
@@ -389,6 +402,11 @@ int main() {
 		litShader.setMat4("view", view);
 		litShader.setMat4("projection", projection);
 		litShader.setVec3("viewPos", camera.Position);
+
+		colorShader.use();
+		colorShader.setMat4("view", view);
+		colorShader.setMat4("projection", projection);
+		colorShader.setVec3("viewPos", camera.Position);
 
 		spotLights[0].position = camera.Position;
 		spotLights[0].direction = camera.Front;
@@ -463,10 +481,14 @@ int main() {
 
 				physicsObjects[i]->PhysicsProcess(deltaTime);
 			}
-			physicsObjects[i]->Draw();
-		}
 
-		floor.Draw();
+			if (showOutline && physicsObjects[i] == ridingCube) {
+				DrawWithOutline(*ridingCube, colorShader, glm::vec3(0.5294117647f, 0.1019607843f, 0.7411764706f));
+			}
+			else {
+				physicsObjects[i]->Draw();
+			}
+		}
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -507,6 +529,16 @@ void processInput(GLFWwindow* window)
 	}
 	else {
 		isDownPressed = false;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS) {
+		if (!isEnterPressed) {
+			isEnterPressed = true;
+			showOutline = !showOutline;
+		}
+	}
+	else {
+		isEnterPressed = false;
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
@@ -990,4 +1022,25 @@ void resolveSpecialCollision(Rigidbody& A, Rigidbody& B, const CollisionInfo& in
 		//A.drawn = false;
 		//A.canCollide = false;
 	}
+}
+
+void DrawWithOutline(Object3D obj, Shader& shader_, glm::vec3 color)
+{
+	Object3D outline = Object3D(obj.position, obj.rotation, obj.scale * 1.05f, obj.VAO, shader_,
+		obj.indexCount, obj.drawElements, 0, 0, 0, glm::vec2(0.0f), glm::vec3(0.0f));
+
+	glStencilFunc(GL_ALWAYS, 1, 0xFF);
+	glStencilMask(0xFF);
+	obj.Draw();
+
+	glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+	glStencilMask(0x00);
+	glDisable(GL_DEPTH_TEST);
+	shader_.use();
+	shader_.setVec3("color", color);
+	outline.Draw();
+	glEnable(GL_DEPTH_TEST);
+
+	glStencilMask(0xFF);
+	glStencilFunc(GL_ALWAYS, 1, 0xFF);
 }

@@ -52,6 +52,10 @@ public:
     unsigned int& VAO;
     bool drawn;
 
+    glm::vec3 position;
+    glm::vec3 rotation;
+    glm::vec3 scale;
+
     Shader& shader;
     bool drawElements;
 
@@ -80,10 +84,6 @@ public:
     void SetScale(glm::vec3 scale_);
     void SetScale(float x, float y, float z);
     glm::vec3 GetScale();
-protected:
-    glm::vec3 position;
-    glm::vec3 rotation;
-    glm::vec3 scale;
 };
 
 class Rigidbody : public Object3D {
@@ -123,3 +123,4 @@ protected:
 };
 
 bool operator==(const Rigidbody& A, const Rigidbody& B);
+

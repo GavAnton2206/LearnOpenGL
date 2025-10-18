@@ -29,10 +29,10 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="assets\shaders\unlit\FragmentShader.frag">
+    <None Include="assets\shaders\unlit\FragmentShaderTex.frag">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="assets\shaders\unlit\VertexShader.vert">
+    <None Include="assets\shaders\unlit\VertexShaderTex.vert">
       <Filter>Source Files</Filter>
     </None>
     <None Include="assets\shaders\lit\FragmentShader.frag" />
@@ -44,6 +44,8 @@
     <None Include="assets\shaders\lit\FragmentShaderTex.frag" />
     <None Include="assets\shaders\lit\VertexShaderTex.vert" />
     <None Include="assets\shaders\depth\LinearDepth.frag" />
+    <None Include="assets\shaders\unlit\FragmentShader.frag" />
+    <None Include="assets\shaders\unlit\VertexShader.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="external\stb_image.h">
