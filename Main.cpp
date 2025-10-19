@@ -37,6 +37,9 @@ void DrawWithOutline(Object3D obj, Shader& shader_, glm::vec3 color = glm::vec3(
 void resolveCollision(Rigidbody& A, Rigidbody& B, const CollisionInfo& info);
 void resolveSpecialCollision(Rigidbody& A, Rigidbody& B, const CollisionInfo& info);
 
+void APIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity,
+	GLsizei length, const char* message, const void* userParam);
+
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
 const float PI = 3.1415926525897932384626433832;
@@ -102,12 +105,14 @@ double random(float randomMax = 1.0f) {
 int main() {
 	glfwInit();
 	// OpenGL 3.3
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	//glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); 
 
 	//glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); // -> borderless
+	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
+	
 	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
 	if (window == NULL)
 	{
@@ -126,6 +131,16 @@ int main() {
 	{
 		std::cout << "Failed to initialize GLAD" << std::endl;
 		return -1;
+	}
+
+	int flagsR;
+	glGetIntegerv(GL_CONTEXT_FLAGS, &flagsR);
+	if (flagsR & GL_CONTEXT_FLAG_DEBUG_BIT)
+	{
+		glEnable(GL_DEBUG_OUTPUT);
+		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+		glDebugMessageCallback(glDebugOutput, nullptr);
+		glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
 	}
 
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -152,7 +167,6 @@ int main() {
 	// ---------------------------------
 	// shaders file translation
 	litShader = Shader("assets/shaders/lit/VertexShader.vert", "assets/shaders/lit/FragmentShader.frag");
-	//litTexShader = Shader("assets/shaders/lit/VertexShaderTex.vert", "assets/shaders/lit/FragmentShaderTex.frag");
 	litTexShader = Shader("assets/shaders/lit/VertexShaderTex.vert", "assets/shaders/lit/FragmentShaderTex.frag");
 	lightShader = Shader("assets/shaders/lighting/VertexShader.vert", "assets/shaders/lighting/FragmentShader.frag");
 	colorShader = Shader("assets/shaders/unlit/VertexShader.vert", "assets/shaders/unlit/FragmentShader.frag");
@@ -167,6 +181,7 @@ int main() {
 	unsigned int boardsSpecularMap = loadTexture("assets/textures/boards_specular.png");
 	unsigned int boardsEmissionMap = loadTexture("assets/textures/boards_emission.jpg");
 
+
 	// shader settings
 	litTexShader.use();
 
@@ -175,14 +190,12 @@ int main() {
 	litTexShader.setInt("material.diffuse", 0);
 	litTexShader.setInt("material.specular", 1);
 	litTexShader.setInt("material.emission", 2);
-	litTexShader.setVec3("material.specular", 0.50196078f, 0.50196078f, 0.50196078f);
 	litTexShader.setFloat("material.shininess", 32.0f);
 
 	// lit shader
 	litShader.use();
 
 	litShader.setVec3("material.diffuse", glm::vec3(0.5f));
-	litShader.setVec3("material.specular", glm::vec3(0.0f));
 	litShader.setVec3("material.emission", glm::vec3(0.0f));
 	litShader.setFloat("material.shininess", 32.0f);
 
@@ -1043,4 +1056,51 @@ void DrawWithOutline(Object3D obj, Shader& shader_, glm::vec3 color)
 
 	glStencilMask(0xFF);
 	glStencilFunc(GL_ALWAYS, 1, 0xFF);
+}
+
+void APIENTRY glDebugOutput(GLenum source,
+	GLenum type,
+	unsigned int id,
+	GLenum severity,
+	GLsizei length,
+	const char* message,
+	const void* userParam)
+{
+	// ignore non-significant error/warning codes
+	//if (id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
+
+	std::cout << "---------------" << std::endl;
+	std::cout << "Debug message (" << id << "): " << message << std::endl;
+
+	switch (source)
+	{
+	case GL_DEBUG_SOURCE_API:             std::cout << "Source: API"; break;
+	case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   std::cout << "Source: Window System"; break;
+	case GL_DEBUG_SOURCE_SHADER_COMPILER: std::cout << "Source: Shader Compiler"; break;
+	case GL_DEBUG_SOURCE_THIRD_PARTY:     std::cout << "Source: Third Party"; break;
+	case GL_DEBUG_SOURCE_APPLICATION:     std::cout << "Source: Application"; break;
+	case GL_DEBUG_SOURCE_OTHER:           std::cout << "Source: Other"; break;
+	} std::cout << std::endl;
+
+	switch (type)
+	{
+	case GL_DEBUG_TYPE_ERROR:               std::cout << "Type: Error"; break;
+	case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: std::cout << "Type: Deprecated Behaviour"; break;
+	case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  std::cout << "Type: Undefined Behaviour"; break;
+	case GL_DEBUG_TYPE_PORTABILITY:         std::cout << "Type: Portability"; break;
+	case GL_DEBUG_TYPE_PERFORMANCE:         std::cout << "Type: Performance"; break;
+	case GL_DEBUG_TYPE_MARKER:              std::cout << "Type: Marker"; break;
+	case GL_DEBUG_TYPE_PUSH_GROUP:          std::cout << "Type: Push Group"; break;
+	case GL_DEBUG_TYPE_POP_GROUP:           std::cout << "Type: Pop Group"; break;
+	case GL_DEBUG_TYPE_OTHER:               std::cout << "Type: Other"; break;
+	} std::cout << std::endl;
+
+	switch (severity)
+	{
+	case GL_DEBUG_SEVERITY_HIGH:         std::cout << "Severity: high"; break;
+	case GL_DEBUG_SEVERITY_MEDIUM:       std::cout << "Severity: medium"; break;
+	case GL_DEBUG_SEVERITY_LOW:          std::cout << "Severity: low"; break;
+	case GL_DEBUG_SEVERITY_NOTIFICATION: std::cout << "Severity: notification"; break;
+	} std::cout << std::endl;
+	std::cout << std::endl;
 }
