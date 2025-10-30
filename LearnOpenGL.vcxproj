@@ -71,24 +71,24 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);D:\Libs\C++\OpenGL\GLFW\Include;D:\Libs\C++\OpenGL\GLAD\include</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);D:\Libs\C++\OpenGL\GLFW\Include;D:\Libs\C++\OpenGL\GLAD\include;$(ProjectDir)vendor</IncludePath>
     <LibraryPath>$(ProjectDir)lib;D:\Libs\C++\OpenGL\GLFW\Libs;$(LibraryPath)</LibraryPath>
     <ExternalIncludePath>
     </ExternalIncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);D:\Libs\C++\OpenGL\GLFW\Include;D:\Libs\C++\OpenGL\GLAD\include</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);D:\Libs\C++\OpenGL\GLFW\Include;D:\Libs\C++\OpenGL\GLAD\include;$(ProjectDir)vendor</IncludePath>
     <LibraryPath>$(ProjectDir)lib;D:\Libs\C++\OpenGL\GLFW\Libs;$(LibraryPath)</LibraryPath>
     <ExternalIncludePath>
     </ExternalIncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);D:\Libs\C++\OpenGL\GLFW\Include;D:\Libs\C++\OpenGL\GLAD\include</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);D:\Libs\C++\OpenGL\GLFW\Include;D:\Libs\C++\OpenGL\GLAD\include;$(ProjectDir)vendor</IncludePath>
     <ExternalIncludePath />
     <LibraryPath>$(ProjectDir)lib;D:\Libs\C++\OpenGL\GLFW\Libs;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);D:\Libs\C++\OpenGL\GLFW\Include;D:\Libs\C++\OpenGL\GLAD\include</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);D:\Libs\C++\OpenGL\GLFW\Include;D:\Libs\C++\OpenGL\GLAD\include;$(ProjectDir)vendor</IncludePath>
     <ExternalIncludePath />
     <LibraryPath>$(ProjectDir)lib;D:\Libs\C++\OpenGL\GLFW\Libs;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
@@ -99,6 +99,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)/vendor/imgui</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -115,6 +116,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)/vendor/imgui</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -131,6 +133,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)/vendor/imgui</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -147,6 +150,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)/vendor/imgui</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -161,6 +165,13 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="external\stb_image.cpp" />
     <ClCompile Include="objects.cpp" />
+    <ClCompile Include="vendor\imgui\imgui.cpp" />
+    <ClCompile Include="vendor\imgui\imgui_demo.cpp" />
+    <ClCompile Include="vendor\imgui\imgui_draw.cpp" />
+    <ClCompile Include="vendor\imgui\imgui_impl_glfw.cpp" />
+    <ClCompile Include="vendor\imgui\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="vendor\imgui\imgui_tables.cpp" />
+    <ClCompile Include="vendor\imgui\imgui_widgets.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\depth\LinearDepth.frag" />
@@ -183,6 +194,15 @@
     <ClInclude Include="light.h" />
     <ClInclude Include="objects.h" />
     <ClInclude Include="shader.h" />
+    <ClInclude Include="vendor\imgui\imconfig.h" />
+    <ClInclude Include="vendor\imgui\imgui.h" />
+    <ClInclude Include="vendor\imgui\imgui_impl_glfw.h" />
+    <ClInclude Include="vendor\imgui\imgui_impl_opengl3.h" />
+    <ClInclude Include="vendor\imgui\imgui_impl_opengl3_loader.h" />
+    <ClInclude Include="vendor\imgui\imgui_internal.h" />
+    <ClInclude Include="vendor\imgui\imstb_rectpack.h" />
+    <ClInclude Include="vendor\imgui\imstb_textedit.h" />
+    <ClInclude Include="vendor\imgui\imstb_truetype.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="assets\textures\awesomeface.png" />
