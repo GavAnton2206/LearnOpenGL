@@ -1,4 +1,4 @@
-#include <glad/glad.h>
+﻿#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 #include "include/glm/glm.hpp"
@@ -532,6 +532,36 @@ int main() {
 
 			ImGui::Checkbox("Show Outline", &showOutline);      // Edit bools storing our window open/close state
 
+			static int currentDepth = 0;
+			const char* depthVar[] = { "GL_LEQUAL", "GL_NOTEQUAL" };
+
+			if (ImGui::BeginCombo("Depth Func", depthVar[currentDepth]))
+			{
+				for (int n = 0; n < IM_ARRAYSIZE(depthVar); n++)
+				{
+					bool is_selected = (currentDepth == n);
+					if (ImGui::Selectable(depthVar[n], is_selected))
+					{
+						currentDepth = n;
+
+						if (n == 0)
+							glDepthFunc(GL_LEQUAL);
+						else if (n == 1)
+							glDepthFunc(GL_NOTEQUAL);
+					}
+
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+
+			static float ridingBoxPosition = ridingCube->GetPosition().x;
+			if (ImGui::SliderFloat("Cube Position", &ridingBoxPosition, -10.0f, 10.0f, "%.3f"))
+			{
+				ridingCube->SetPosition(ridingBoxPosition, ridingCube->GetPosition().y, ridingCube->GetPosition().z);
+			}
+
 			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 			ImGui::End();
 		}
@@ -569,7 +599,6 @@ void processInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
 		if (!isUpPressed) {
 			isUpPressed = true;
-			glDepthFunc(GL_LEQUAL);
 		}
 	}
 	else {
@@ -579,7 +608,6 @@ void processInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
 		if (!isDownPressed) {
 			isDownPressed = true;
-			glDepthFunc(GL_NOTEQUAL);
 		}
 	}
 	else {
