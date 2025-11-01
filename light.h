@@ -2,6 +2,7 @@
 #define LIGHT_H
 
 #include <glad/glad.h>
+#include "vector"
 #include "include/glm/glm.hpp"
 #include "include/glm/gtc/matrix_transform.hpp"
 #include "shader.h"
@@ -47,6 +48,31 @@ public:
         }
 
         shader.setVec3("dirLight.direction", direction);
+    }
+
+    void Update(std::vector<Shader>& shaders, bool use = false, int id_ = -1) {
+        for (Shader shader : shaders)
+        {
+            if (use) {
+                shader.use();
+            }
+
+            if (isShowing && !shown) {
+                shader.setVec3("dirLight.ambient", glm::vec3(0.0f, 0.0f, 0.0f));
+                shader.setVec3("dirLight.diffuse", glm::vec3(0.0f, 0.0f, 0.0f));
+            }
+            else if (!isShowing && shown) {
+                shader.setVec3("dirLight.ambient", ambient);
+                shader.setVec3("dirLight.diffuse", diffuse);
+            }
+        }
+
+        if (isShowing && !shown) {
+            isShowing = false;
+        }
+        else if (!isShowing && shown) {
+            isShowing = true;
+        }
     }
 private:
     bool isShowing;
@@ -118,6 +144,40 @@ public:
 
         shader.setVec3(Id + "position", position);
         shader.setVec3(Id + "direction", direction);
+    }
+
+    void Update(std::vector<Shader>& shaders, bool use = false, int id_ = -1) {
+        for (Shader shader: shaders)
+        {
+            if (use) {
+                shader.use();
+            }
+
+            std::string Id;
+            if (id_ == -1)
+                Id = "spotLights[" + std::to_string(id) + "].";
+            else
+                Id = "spotLights[" + std::to_string(id_) + "].";
+
+            if (isShowing && !shown) {
+                shader.setVec3(Id + "ambient", glm::vec3(0.0f, 0.0f, 0.0f));
+                shader.setVec3(Id + "diffuse", glm::vec3(0.0f, 0.0f, 0.0f));
+            }
+            else if (!isShowing && shown) {
+                shader.setVec3(Id + "ambient", ambient);
+                shader.setVec3(Id + "diffuse", diffuse);
+            }
+
+            shader.setVec3(Id + "position", position);
+            shader.setVec3(Id + "direction", direction);
+        }
+
+        if (isShowing && !shown) {
+            isShowing = false;
+        }
+        else if (!isShowing && shown) {
+            isShowing = true;
+        }
     }
 private:
     bool isShowing;
@@ -203,6 +263,39 @@ public:
         }
 
         shader.setVec3(Id + "position", position);
+    }
+
+    void Update(std::vector<Shader>& shaders, bool use = false, int id_ = -1) {
+        for (Shader shader : shaders)
+        {
+            if (use) {
+                shader.use();
+            }
+
+            std::string Id;
+            if (id_ == -1)
+                Id = "spotLights[" + std::to_string(id) + "].";
+            else
+                Id = "spotLights[" + std::to_string(id_) + "].";
+
+            if (isShowing && !shown) {
+                shader.setVec3(Id + "ambient", glm::vec3(0.0f, 0.0f, 0.0f));
+                shader.setVec3(Id + "diffuse", glm::vec3(0.0f, 0.0f, 0.0f));
+            }
+            else if (!isShowing && shown) {
+                shader.setVec3(Id + "ambient", ambient);
+                shader.setVec3(Id + "diffuse", diffuse);
+            }
+
+            shader.setVec3(Id + "position", position);
+        }
+
+        if (isShowing && !shown) {
+            isShowing = false;
+        }
+        else if (!isShowing && shown) {
+            isShowing = true;
+        }
     }
 private:
     bool isShowing;

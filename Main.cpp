@@ -49,6 +49,12 @@ const unsigned int SCR_HEIGHT = 1080;
 const float PI = 3.1415926525897932384626433832;
 const float rotationPerSecond = 0.25f;
 
+static float ridingBoxPosition;
+static glm::vec3 cameraPosition;
+static float cameraZoom;
+static glm::vec3 cameraFront;
+static bool lampOn = true;
+
 // Input
 // Keys
 bool isUpPressed = false;
@@ -447,8 +453,13 @@ int main() {
 
 		pointLights[0].position = lightPos;
 
+		std::vector<Shader> shaders;
+		shaders.push_back(litShader);
+		shaders.push_back(litTexShader);
+		shaders.push_back(lightShader);
+
 		int j = 0;
-		for (auto it = std::begin(spotLights); it != std::end(spotLights); ++it, j++) {
+		for (auto it = std::begin(spotLights); it != std::end(spotLights); ++it, j++) {	
 			it->Update(litShader, true, j);
 			it->Update(litTexShader, true, j);
 			it->Update(lightShader, true, j);
@@ -530,7 +541,10 @@ int main() {
 
 			ImGui::Begin("Settings");
 
-			ImGui::Checkbox("Show Outline", &showOutline);      // Edit bools storing our window open/close state
+			ImGui::Checkbox("Show Outline", &showOutline);
+			if (ImGui::Checkbox("Lamp On", &lampOn)) {
+				spotLights[0].shown = false;
+			}
 
 			static int currentDepth = 0;
 			const char* depthVar[] = { "GL_LEQUAL", "GL_NOTEQUAL" };
@@ -556,11 +570,29 @@ int main() {
 				ImGui::EndCombo();
 			}
 
-			static float ridingBoxPosition = ridingCube->GetPosition().x;
+			ridingBoxPosition = ridingCube->GetPosition().x;
 			if (ImGui::SliderFloat("Cube Position", &ridingBoxPosition, -10.0f, 10.0f, "%.3f"))
 			{
 				ridingCube->SetPosition(ridingBoxPosition, ridingCube->GetPosition().y, ridingCube->GetPosition().z);
 			}
+
+			cameraPosition = camera.Position;
+			cameraZoom = camera.Zoom;
+			cameraFront = camera.Front;
+
+			if (ImGui::SliderFloat("Camera X", &cameraPosition.x, -10.0f, 10.0f, "%.3f") ||
+				ImGui::SliderFloat("Camera Y", &cameraPosition.y, -10.0f, 10.0f, "%.3f") ||
+				ImGui::SliderFloat("Camera Z", &cameraPosition.z, -10.0f, 10.0f, "%.3f"))
+			{
+				camera.SetPosition(glm::vec3(cameraPosition.x, cameraPosition.y, cameraPosition.z));
+			}
+
+			if(ImGui::SliderFloat("Camera Zoom", &cameraZoom, 1.0f, 45.0f, "%.3f"))
+			{
+				camera.SetZoom(cameraZoom);
+			}
+
+			ImGui::Text("Camera Front: (%.3f, %.3f, %.3f)", cameraFront.x, cameraFront.y, cameraFront.z);
 
 			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 			ImGui::End();

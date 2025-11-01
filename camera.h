@@ -102,6 +102,16 @@ public:
         }
     }
 
+    void SetPosition(glm::vec3 position)
+    {
+        Position = position;
+    }
+
+    void SetZoom(float zoom)
+    {
+        Zoom = zoom;
+    }
+
 private:
     void updateCameraVectors()
     {
