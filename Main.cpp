@@ -460,9 +460,10 @@ int main() {
 
 		int j = 0;
 		for (auto it = std::begin(spotLights); it != std::end(spotLights); ++it, j++) {	
-			it->Update(litShader, true, j);
-			it->Update(litTexShader, true, j);
-			it->Update(lightShader, true, j);
+			it->Update(shaders, true, j);
+			//it->Update(litShader, true, j);
+			//it->Update(litTexShader, true, j);
+			//it->Update(lightShader, true, j);
 		}
 		j = 0;
 		for (auto it = std::begin(pointLights); it != std::end(pointLights); ++it, j++) {
@@ -543,7 +544,7 @@ int main() {
 
 			ImGui::Checkbox("Show Outline", &showOutline);
 			if (ImGui::Checkbox("Lamp On", &lampOn)) {
-				spotLights[0].shown = false;
+				spotLights[0].shown = lampOn;
 			}
 
 			static int currentDepth = 0;
