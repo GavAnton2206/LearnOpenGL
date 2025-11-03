@@ -6,6 +6,8 @@ vendor/*
 !vendor/**/*.h
 !vendor/**/*.hpp
 
+imgui.ini
+
 *.exe
 *.obj
 *.pdb
