@@ -1,3 +1,16 @@
+#### Custom
+build/
+
+vendor/*
+
+!vendor/**/*.h
+!vendor/**/*.hpp
+
+*.exe
+*.obj
+*.pdb
+
+## Prebuilt ##
 ##### Windows
 # Windows thumbnail cache files
 Thumbs.db
@@ -24,17 +37,12 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-##### Linux
-*~
-
 # temporary files which can be created if a process still has a handle open of a deleted file
 .fuse_hidden*
 
 # KDE directory preferences
 .directory
 
-# Linux trash folder which might appear on any partition or disk
-.Trash-*
 
 # .nfs files are created when an open file is removed but is still being accessed
 .nfs*
@@ -45,8 +53,6 @@ $RECYCLE.BIN/
 .AppleDouble
 .LSOverride
 
-# Thumbnails
-._*
 
 # Files that might appear in the root of a volume
 .DocumentRevisions-V100
@@ -57,29 +63,14 @@ $RECYCLE.BIN/
 .VolumeIcon.icns
 .com.apple.timemachine.donotpresent
 
-# Directories potentially created on remote AFP share
-.AppleDB
-.AppleDesktop
-Network Trash Folder
-Temporary Items
-.apdisk
-
-##### Android
-# Built application files
-*.apk
-*.ap_
-*.aab
-
 # Files for the ART/Dalvik VM
 *.dex
-
-# Java class files
-*.class
 
 # Generated files
 bin/
 gen/
 out/
+
 #  Uncomment the following line in case you need and you don't have the release build type files in your app
 # release/
 
@@ -590,8 +581,7 @@ bld/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
-vendor/
-include/
+
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
