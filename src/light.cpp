@@ -1,5 +1,3 @@
-#pragma once
-
 #include "light.h"
 
 DirectionLight::DirectionLight(glm::vec3 dir_, glm::vec3 ambient_, glm::vec3 diffuse_, glm::vec3 specular_) :

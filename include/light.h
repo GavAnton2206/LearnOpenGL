@@ -1,5 +1,4 @@
-#ifndef LIGHT_H
-#define LIGHT_H
+#pragma once
 
 #include "shader.h"
 
@@ -20,62 +19,16 @@ public:
 
     bool shown;
 
-    DirectionLight(glm::vec3 dir_ = glm::vec3(0.0f), glm::vec3 ambient_ = glm::vec3(0.0f), 
-                   glm::vec3 diffuse_ = glm::vec3(0.0f), glm::vec3 specular_ = glm::vec3(0.0f)) :
-                   direction(dir_), ambient(ambient_), diffuse(diffuse_), specular(specular_), shown(true), isShowing(true) {}
+    DirectionLight(glm::vec3 dir_ = glm::vec3(0.0f),
+                   glm::vec3 ambient_ = glm::vec3(0.0f),
+                   glm::vec3 diffuse_ = glm::vec3(0.0f),
+                   glm::vec3 specular_ = glm::vec3(0.0f));
 
-    void Setup(Shader& shader, bool use = false) {
-        if (use)
-            shader.use();
+    void Setup(Shader& shader, bool use = false);
 
-        shader.setVec3("dirLight.direction", direction);
-        shader.setVec3("dirLight.ambient", ambient);
-        shader.setVec3("dirLight.diffuse", diffuse);
-        shader.setVec3("dirLight.specular", specular);
-    }
+    void Update(Shader& shader, bool use = false);
+    void Update(std::vector<Shader>& shaders, bool use = false, int id_ = -1);
 
-    void Update(Shader& shader, bool use = false) {
-        if (use)
-            shader.use();
-
-        if (isShowing && !shown) {
-            shader.setVec3("dirLight.ambient", glm::vec3(0.0f, 0.0f, 0.0f));
-            shader.setVec3("dirLight.diffuse", glm::vec3(0.0f, 0.0f, 0.0f));
-            isShowing = false;
-        }
-        else if (!isShowing && shown) {
-            shader.setVec3("dirLight.ambient", ambient);
-            shader.setVec3("dirLight.diffuse", diffuse);
-            isShowing = true;
-        }
-
-        shader.setVec3("dirLight.direction", direction);
-    }
-
-    void Update(std::vector<Shader>& shaders, bool use = false, int id_ = -1) {
-        for (Shader shader : shaders)
-        {
-            if (use) {
-                shader.use();
-            }
-
-            if (isShowing && !shown) {
-                shader.setVec3("dirLight.ambient", glm::vec3(0.0f, 0.0f, 0.0f));
-                shader.setVec3("dirLight.diffuse", glm::vec3(0.0f, 0.0f, 0.0f));
-            }
-            else if (!isShowing && shown) {
-                shader.setVec3("dirLight.ambient", ambient);
-                shader.setVec3("dirLight.diffuse", diffuse);
-            }
-        }
-
-        if (isShowing && !shown) {
-            isShowing = false;
-        }
-        else if (!isShowing && shown) {
-            isShowing = true;
-        }
-    }
 private:
     bool isShowing;
 };
@@ -97,90 +50,20 @@ public:
     bool shown;
 
 
-    SpotLight(int id_ = 0, float cutOff_ = glm::cos(glm::radians(15.5f)), float outerCutOff_ = glm::cos(glm::radians(18.5f)), glm::vec3 ambient_ = glm::vec3(0.0f), glm::vec3 diffuse_ = glm::vec3(0.0f),
-              glm::vec3 specular_ = glm::vec3(0.0f), glm::vec3 position_ = glm::vec3(0.0f), 
-              glm::vec3 dir_ = glm::vec3(0.0f)) :
-        id(id_), cutOff(cutOff_), outerCutOff(outerCutOff_), direction(dir_), position(position_), ambient(ambient_), diffuse(diffuse_), specular(specular_), shown(true), isShowing(true) {}
+    SpotLight(int id_ = 0,
+        float cutOff_ = glm::cos(glm::radians(15.5f)),
+        float outerCutOff_ = glm::cos(glm::radians(18.5f)),
+        glm::vec3 ambient_ = glm::vec3(0.0f),
+        glm::vec3 diffuse_ = glm::vec3(0.0f),
+        glm::vec3 specular_ = glm::vec3(0.0f),
+        glm::vec3 position_ = glm::vec3(0.0f),
+        glm::vec3 dir_ = glm::vec3(0.0f));
 
-    void Setup(Shader& shader, bool use = false, int id_ = -1) {
-        if (use)
-            shader.use();
+    void Setup(Shader& shader, bool use = false, int id_ = -1);
 
-        std::string Id;
-        if(id_ == -1)
-            Id = "spotLights[" + std::to_string(id) + "].";
-        else
-            Id = "spotLights[" + std::to_string(id_) + "].";
+    void Update(Shader& shader, bool use = false, int id_ = -1);
+    void Update(std::vector<Shader>& shaders, bool use = false, int id_ = -1);
 
-        shader.setVec3(Id + "position", position);
-        shader.setVec3(Id + "direction", direction);
-
-        shader.setFloat(Id + "cutOff", cutOff);
-        shader.setFloat(Id + "outerCutOff", outerCutOff);
-
-        shader.setVec3(Id + "ambient", ambient);
-        shader.setVec3(Id + "diffuse", diffuse);
-        shader.setVec3(Id + "specular", specular);
-    }
-
-    void Update(Shader& shader, bool use = false, int id_ = -1) {
-        if (use)
-            shader.use();
-
-        std::string Id;
-        if (id_ == -1)
-            Id = "spotLights[" + std::to_string(id) + "].";
-        else
-            Id = "spotLights[" + std::to_string(id_) + "].";
-
-        if (isShowing && !shown) {
-            shader.setVec3(Id + "ambient", glm::vec3(0.0f, 0.0f, 0.0f));
-            shader.setVec3(Id + "diffuse", glm::vec3(0.0f, 0.0f, 0.0f));
-            isShowing = false;
-        }
-        else if (!isShowing && shown) {
-            shader.setVec3(Id + "ambient", ambient);
-            shader.setVec3(Id + "diffuse", diffuse);
-            isShowing = true;
-        }
-
-        shader.setVec3(Id + "position", position);
-        shader.setVec3(Id + "direction", direction);
-    }
-
-    void Update(std::vector<Shader>& shaders, bool use = false, int id_ = -1) {
-        for (Shader shader: shaders)
-        {
-            if (use) {
-                shader.use();
-            }
-
-            std::string Id;
-            if (id_ == -1)
-                Id = "spotLights[" + std::to_string(id) + "].";
-            else
-                Id = "spotLights[" + std::to_string(id_) + "].";
-
-            if (isShowing && !shown) {
-                shader.setVec3(Id + "ambient", glm::vec3(0.0f, 0.0f, 0.0f));
-                shader.setVec3(Id + "diffuse", glm::vec3(0.0f, 0.0f, 0.0f));
-            }
-            else if (!isShowing && shown) {
-                shader.setVec3(Id + "ambient", ambient);
-                shader.setVec3(Id + "diffuse", diffuse);
-            }
-
-            shader.setVec3(Id + "position", position);
-            shader.setVec3(Id + "direction", direction);
-        }
-
-        if (isShowing && !shown) {
-            isShowing = false;
-        }
-        else if (!isShowing && shown) {
-            isShowing = true;
-        }
-    }
 private:
     bool isShowing;
 };
@@ -203,103 +86,23 @@ public:
 
     bool shown;
 
-    PointLight(int id_ = 0, float radius = -1.0f, glm::vec3 ambient_ = glm::vec3(0.0f), glm::vec3 diffuse_ = glm::vec3(0.0f),
-        glm::vec3 specular_ = glm::vec3(0.0f), glm::vec3 position_ = glm::vec3(0.0f), float constant_ = 1.0, float linear_ = 0.0, float quadratic_ = 0.0) :
-        id(id_), constant(constant_), linear(linear_), quadratic(quadratic_), position(position_), ambient(ambient_), diffuse(diffuse_), specular(specular_), shown(true), isShowing(true)
-    {
-        if (radius != -1.0f && constant_ == 1.0f && linear_ == 0.0f && quadratic_ == 0.0f) {
-            UpdateRadius(radius);
-        }
-    }
+    PointLight(int id_ = 0,
+        float radius = -1.0f,
+        glm::vec3 ambient_ = glm::vec3(0.0f),
+        glm::vec3 diffuse_ = glm::vec3(0.0f),
+        glm::vec3 specular_ = glm::vec3(0.0f),
+        glm::vec3 position_ = glm::vec3(0.0f),
+        float constant_ = 1.0,
+        float linear_ = 0.0,
+        float quadratic_ = 0.0);
 
-    void UpdateRadius(float radius) {
-        float radiusLight = 0.01f;
+    void UpdateRadius(float radius);
 
-        constant = 1.0f;
-        linear = 0.22f;
-        quadratic = 0.2f;
-        //linear = (1 - radiusLight) / radiusLight * (2 / radius);
-        //quadratic = (1 - radiusLight) / radiusLight * (1 / pow(radius, 2));
-    }
+    void Setup(Shader& shader, bool use = false, int id_ = -1);
 
-    void Setup(Shader& shader, bool use = false, int id_ = -1) {
-        if (use)
-            shader.use();
+    void Update(Shader& shader, bool use = false, int id_ = -1);
+    void Update(std::vector<Shader>& shaders, bool use = false, int id_ = -1);
 
-        std::string Id;
-        if (id_ == -1)
-            Id = "pointLights[" + std::to_string(id) + "].";
-        else
-            Id = "pointLights[" + std::to_string(id_) + "].";
-
-        shader.setVec3(Id + "position", position);
-
-        shader.setFloat(Id + "constant", constant);
-        shader.setFloat(Id + "linear", linear);
-        shader.setFloat(Id + "quadratic", quadratic);
-
-        shader.setVec3(Id + "ambient", ambient);
-        shader.setVec3(Id + "diffuse", diffuse);
-        shader.setVec3(Id + "specular", specular);
-    }
-
-    void Update(Shader& shader, bool use = false, int id_ = -1) {
-        if (use)
-            shader.use();
-
-        std::string Id;
-        if (id_ == -1)
-            Id = "pointLights[" + std::to_string(id) + "].";
-        else
-            Id = "pointLights[" + std::to_string(id_) + "].";
-
-        if (isShowing && !shown) {
-            shader.setVec3(Id + "ambient", glm::vec3(0.0f, 0.0f, 0.0f));
-            shader.setVec3(Id + "diffuse", glm::vec3(0.0f, 0.0f, 0.0f));
-            isShowing = false;
-        }
-        else if (!isShowing && shown) {
-            shader.setVec3(Id + "ambient", ambient);
-            shader.setVec3(Id + "diffuse", diffuse);
-            isShowing = true;
-        }
-
-        shader.setVec3(Id + "position", position);
-    }
-
-    void Update(std::vector<Shader>& shaders, bool use = false, int id_ = -1) {
-        for (Shader shader : shaders)
-        {
-            if (use) {
-                shader.use();
-            }
-
-            std::string Id;
-            if (id_ == -1)
-                Id = "spotLights[" + std::to_string(id) + "].";
-            else
-                Id = "spotLights[" + std::to_string(id_) + "].";
-
-            if (isShowing && !shown) {
-                shader.setVec3(Id + "ambient", glm::vec3(0.0f, 0.0f, 0.0f));
-                shader.setVec3(Id + "diffuse", glm::vec3(0.0f, 0.0f, 0.0f));
-            }
-            else if (!isShowing && shown) {
-                shader.setVec3(Id + "ambient", ambient);
-                shader.setVec3(Id + "diffuse", diffuse);
-            }
-
-            shader.setVec3(Id + "position", position);
-        }
-
-        if (isShowing && !shown) {
-            isShowing = false;
-        }
-        else if (!isShowing && shown) {
-            isShowing = true;
-        }
-    }
 private:
     bool isShowing;
 };
-#endif

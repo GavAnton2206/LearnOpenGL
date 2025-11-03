@@ -1,10 +1,10 @@
 #### Custom
 build/
 
-vendor/*
+/vendor/*
 
-!vendor/**/*.h
-!vendor/**/*.hpp
+!/vendor/**/*.h
+!/vendor/**/*.hpp
 
 imgui.ini
 
