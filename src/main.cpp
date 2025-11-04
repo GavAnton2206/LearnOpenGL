@@ -1,5 +1,7 @@
 ﻿#include "main.h"
 
+#include "utils.h"
+#include "gldebugger.h"
 #include "shader.h"
 #include "camera.h"
 #include "light.h"
@@ -19,17 +21,27 @@
 #include <string>
 #include <vector>
 
+// ------------------------------------------------
+// Engine-related
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
-const float PI = 3.1415926525897932384626433832;
-const float rotationPerSecond = 0.25f;
 
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
+
+// ------------------------------------------------
+// Systems
+GLDebugger glDebugger;
+
+// ------------------------------------------------
+// UI
 static float ridingBoxPosition;
 static glm::vec3 cameraPosition;
 static float cameraZoom;
 static glm::vec3 cameraFront;
 static bool lampOn = true;
 
+// ------------------------------------------------
 // Input
 // Keys
 bool isUpPressed = false;
@@ -44,7 +56,6 @@ bool isAPressed = false;
 bool isDPressed = false;
 bool isSpacePressed = false;
 bool pause = false;
-float cubeSpeed = 15.0f;
 
 // Mouse
 double lastX = SCR_WIDTH / 2.0f;
@@ -52,54 +63,59 @@ double lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 bool cursorHidden = true;
 
-// Objects
-std::vector<Rigidbody*> physicsObjects;
-
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
-DirectionLight dirLight(glm::vec3(-0.2f, -1.0f, -0.3f), glm::vec3(0.3f),
-	glm::vec3(0.4f, 0.4f, 0.4f), glm::vec3(0.5f, 0.5f, 0.5f));
-SpotLight spotLights[1]; // NR_POINT_LIGHTS
-PointLight pointLights[1]; // NR_SPOT_LIGHTS
-
+// --------------------------------------------------------
+// Shaders
 Shader litShader;
 Shader litTexShader;
 Shader lightShader;
 Shader colorShader;
 
+// --------------------------------------------------------
+// Camera
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+
+// Lights
+DirectionLight dirLight(glm::vec3(-0.2f, -1.0f, -0.3f), glm::vec3(0.3f),
+	glm::vec3(0.4f, 0.4f, 0.4f), glm::vec3(0.5f, 0.5f, 0.5f));
+SpotLight spotLights[1]; // NR_POINT_LIGHTS in shaders
+PointLight pointLights[1]; // NR_SPOT_LIGHTS in shaders
+
+// --------------------------------------------------------
+// Rigidbody Objects
 std::vector<Rigidbody> bouncingObjects;
+std::vector<Rigidbody*> physicsObjects;
+
 Rigidbody* ridingCube = nullptr;
 
-glm::vec3 cubeControlPos;
-
-// Timings
-float deltaTime = 0.0f;
-float lastFrame = 0.0f;
-
-// Cube Control
-float rotationSpeed = glm::radians(50.0f);
-float currentRotation = 0.0f;
-float lastRotationTime = 0.0f;
+// --------------------------------------------------------
+// Cube Settings
 bool showOutline = false;
+float cubeSpeed = 15.0f;
 
-// Light Control
+// Light Settings
 glm::vec3 lightPos;
 float lightOrbitRadius = 10.0f;
 
-double random(float randomMax = 1.0f) {
-	return randomMax * (double)rand() / (double)RAND_MAX;
-}
-
 int main() {
 	glfwInit();
-	// OpenGL 3.3
+	
+	// -----------------------------------------------
+	// Setting Up GLFW
+	// OpenGL Core 4.3
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	//glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); 
 
-	//glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); // -> borderless
+	// Forward Compatibility, for macOS
+	// glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); 
+
+	// Borderless
+	//glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); // borderless window
+	
+	// Debugging
 	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
 	
+	// -----------------------------------------------
 	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
 	if (window == NULL)
 	{
@@ -109,29 +125,25 @@ int main() {
 	}
 
 	glfwMakeContextCurrent(window);
-	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback); // resizing changes gl viewport
-	glfwSetCursorPosCallback(window, mouse_callback);
-	glfwSetMouseButtonCallback(window, mouse_button_callback);
-	glfwSetScrollCallback(window, scroll_callback);
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
+	// -----------------------------------------------
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback); // resizing
+	glfwSetCursorPosCallback(window, mouse_callback); // mouse movement
+	glfwSetMouseButtonCallback(window, mouse_button_callback); // mouse clicks
+	glfwSetScrollCallback(window, scroll_callback); // scrolling
+
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); // hidden cursor
+
+	// -----------------------------------------------
+	// GLAD
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
 		std::cout << "Failed to initialize GLAD" << std::endl;
 		return -1;
 	}
 
-	int flagsR;
-	glGetIntegerv(GL_CONTEXT_FLAGS, &flagsR);
-	if (flagsR & GL_CONTEXT_FLAG_DEBUG_BIT)
-	{
-		glEnable(GL_DEBUG_OUTPUT);
-		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-		glDebugMessageCallback(glDebugOutput, nullptr);
-		glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
-	}
-
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	// Debugging
+	glDebugger.Setup();
 
 	// ---------------------------------
 	// light creation
@@ -243,7 +255,7 @@ int main() {
 		litShader,
 		sphereVerticesNum,
 		true,
-		4.0 / 3.0 * PI * pow(0.545f, 2) * density,
+		4.0 / 3.0 * glm::pi<float>() * pow(0.545f, 2) * density,
 		ObjectType::DYNAMIC, 0, 0, 0, glm::vec2(0.0f), sphereColor));
 
 	bouncingObjects.push_back(Rigidbody(glm::vec3(-6.0f, 7.0f, 0.0f),
@@ -253,7 +265,7 @@ int main() {
 		litShader,
 		sphereVerticesNum,
 		true,
-		4.0 / 3.0 * PI * pow(0.545f, 2) * density,
+		4.0 / 3.0 * glm::pi<float>() * pow(0.545f, 2) * density,
 		ObjectType::DYNAMIC, 0, 0, 0, glm::vec2(0.0f), sphereColor));
 
 	bouncingObjects.push_back(Rigidbody(glm::vec3(-6.0f, 10.0f, 0.0f),
@@ -263,7 +275,7 @@ int main() {
 		litShader,
 		sphereVerticesNum,
 		true,
-		4.0 / 3.0 * PI * pow(0.545f, 2) * density,
+		4.0 / 3.0 * glm::pi<float>() * pow(0.545f, 2) * density,
 		ObjectType::DYNAMIC, 0, 0, 0, glm::vec2(0.0f), sphereColor));
 
 	bouncingObjects.push_back(Rigidbody(glm::vec3(-6.0f, 1.0f, 0.0f),
@@ -273,7 +285,7 @@ int main() {
 		litShader,
 		sphereVerticesNum,
 		true,
-		4.0 / 3.0 * PI * pow(0.545f, 2) * density,
+		4.0 / 3.0 * glm::pi<float>() * pow(0.545f, 2) * density,
 		ObjectType::DYNAMIC, 0, 0, 0, glm::vec2(0.0f), sphereColor));
 
 	bouncingObjects.push_back(Rigidbody(glm::vec3(-10.0f, 4.0f, 0.0f),
@@ -283,7 +295,7 @@ int main() {
 		litShader,
 		sphereVerticesNum,
 		true,
-		4.0 / 3.0 * PI * pow(0.545f, 2) * density,
+		4.0 / 3.0 * glm::pi<float>() * pow(0.545f, 2) * density,
 		ObjectType::DYNAMIC, 0, 0, 0, glm::vec2(0.0f), sphereColor));
 
 	bouncingObjects.push_back(Rigidbody(glm::vec3(6.0f, 4.0f, 0.0f),
@@ -345,7 +357,7 @@ int main() {
 		litShader,
 		sphereVerticesNum,
 		true,
-		4.0 / 3.0 * PI * pow(0.545f, 2) * density,
+		4.0 / 3.0 * glm::pi<float>() * pow(0.545f, 2) * density,
 		ObjectType::DYNAMIC, 0, 0, 0, glm::vec2(0.0f), sphereColor);
 
 	// Physics Objects
@@ -922,12 +934,12 @@ unsigned int sphereMeshSetup(unsigned int& sphereVBO, unsigned int& sphereVAO, u
 	std::vector<float> vertices;
 
 	for (int i = 0; i <= stacks; ++i) {
-		float stackAngle = PI / 2.0f - i * (PI / stacks); // from pi/2 to -pi/2
+		float stackAngle = glm::pi<float>() / 2.0f - i * (glm::pi<float>() / stacks); // from pi/2 to -pi/2
 		float xy = cosf(stackAngle);                     // r * cos(u)
 		float z = sinf(stackAngle);                      // r * sin(u)
 
 		for (int j = 0; j <= sectors; ++j) {
-			float sectorAngle = j * (2 * PI / sectors); // from 0 to 2pi
+			float sectorAngle = j * (2 * glm::pi<float>() / sectors); // from 0 to 2pi
 
 			float x = xy * cosf(sectorAngle);
 			float y = xy * sinf(sectorAngle);
@@ -1164,51 +1176,4 @@ void DrawWithOutline(Object3D obj, Shader& shader_, glm::vec3 color)
 
 	glStencilMask(0xFF);
 	glStencilFunc(GL_ALWAYS, 1, 0xFF);
-}
-
-void APIENTRY glDebugOutput(GLenum source,
-	GLenum type,
-	unsigned int id,
-	GLenum severity,
-	GLsizei length,
-	const char* message,
-	const void* userParam)
-{
-	// ignore non-significant error/warning codes
-	//if (id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
-
-	std::cout << "---------------" << std::endl;
-	std::cout << "Debug message (" << id << "): " << message << std::endl;
-
-	switch (source)
-	{
-	case GL_DEBUG_SOURCE_API:             std::cout << "Source: API"; break;
-	case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   std::cout << "Source: Window System"; break;
-	case GL_DEBUG_SOURCE_SHADER_COMPILER: std::cout << "Source: Shader Compiler"; break;
-	case GL_DEBUG_SOURCE_THIRD_PARTY:     std::cout << "Source: Third Party"; break;
-	case GL_DEBUG_SOURCE_APPLICATION:     std::cout << "Source: Application"; break;
-	case GL_DEBUG_SOURCE_OTHER:           std::cout << "Source: Other"; break;
-	} std::cout << std::endl;
-
-	switch (type)
-	{
-	case GL_DEBUG_TYPE_ERROR:               std::cout << "Type: Error"; break;
-	case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: std::cout << "Type: Deprecated Behaviour"; break;
-	case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  std::cout << "Type: Undefined Behaviour"; break;
-	case GL_DEBUG_TYPE_PORTABILITY:         std::cout << "Type: Portability"; break;
-	case GL_DEBUG_TYPE_PERFORMANCE:         std::cout << "Type: Performance"; break;
-	case GL_DEBUG_TYPE_MARKER:              std::cout << "Type: Marker"; break;
-	case GL_DEBUG_TYPE_PUSH_GROUP:          std::cout << "Type: Push Group"; break;
-	case GL_DEBUG_TYPE_POP_GROUP:           std::cout << "Type: Pop Group"; break;
-	case GL_DEBUG_TYPE_OTHER:               std::cout << "Type: Other"; break;
-	} std::cout << std::endl;
-
-	switch (severity)
-	{
-	case GL_DEBUG_SEVERITY_HIGH:         std::cout << "Severity: high"; break;
-	case GL_DEBUG_SEVERITY_MEDIUM:       std::cout << "Severity: medium"; break;
-	case GL_DEBUG_SEVERITY_LOW:          std::cout << "Severity: low"; break;
-	case GL_DEBUG_SEVERITY_NOTIFICATION: std::cout << "Severity: notification"; break;
-	} std::cout << std::endl;
-	std::cout << std::endl;
 }
