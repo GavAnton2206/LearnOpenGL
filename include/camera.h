@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-enum Camera_Movement {
+enum CameraMovement {
     FORWARD,
     BACKWARD,
     LEFT,
@@ -38,7 +38,7 @@ public:
 
     glm::mat4 GetViewMatrix();
 
-    void ProcessKeyboard(Camera_Movement direction, float deltaTime);
+    void ProcessKeyboard(CameraMovement direction, float deltaTime);
     void ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true);
     void ProcessMouseScroll(float yoffset, GLboolean constrainZoom = true);
 

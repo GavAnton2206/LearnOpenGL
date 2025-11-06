@@ -1,5 +1,6 @@
 ﻿#include "main.h"
 
+#include "input.h"
 #include "utils.h"
 #include "gldebugger.h"
 #include "shader.h"
@@ -25,6 +26,7 @@
 // Engine-related
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
+GLFWwindow* window;
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -32,6 +34,7 @@ float lastFrame = 0.0f;
 // ------------------------------------------------
 // Systems
 GLDebugger glDebugger;
+Input input;
 
 // ------------------------------------------------
 // UI
@@ -44,17 +47,6 @@ static bool lampOn = true;
 // ------------------------------------------------
 // Input
 // Keys
-bool isUpPressed = false;
-bool isEscapePressed = false;
-bool isDownPressed = false;
-bool isEnterPressed = false;
-bool isLeftPressed = false;
-bool isRightPressed = false;
-bool isWPressed = false;
-bool isSPressed = false;
-bool isAPressed = false;
-bool isDPressed = false;
-bool isSpacePressed = false;
 bool pause = false;
 
 // Mouse
@@ -96,6 +88,25 @@ float cubeSpeed = 15.0f;
 glm::vec3 lightPos;
 float lightOrbitRadius = 10.0f;
 
+// Temporary
+void RidingCubeLeft() {
+	ridingCube->SetPosition(ridingCube->GetPosition().x - cubeSpeed * deltaTime, ridingCube->GetPosition().y, ridingCube->GetPosition().z);
+}
+
+void RidingCubeRight() {
+	ridingCube->SetPosition(ridingCube->GetPosition().x + cubeSpeed * deltaTime, ridingCube->GetPosition().y, ridingCube->GetPosition().z);
+}
+
+void ManageESC() {
+	if (!cursorHidden) {
+		glfwSetWindowShouldClose(window, true);
+	}
+	else {
+		cursorHidden = false;
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	}
+}
+
 int main() {
 	glfwInit();
 	
@@ -116,7 +127,7 @@ int main() {
 	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
 	
 	// -----------------------------------------------
-	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+	window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
 	if (window == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
@@ -144,6 +155,27 @@ int main() {
 
 	// Debugging
 	glDebugger.Setup();
+
+	input.BindAction(GLFW_KEY_LEFT, InputEventType::PRESSED, RidingCubeLeft);
+	input.BindAction(GLFW_KEY_RIGHT, InputEventType::PRESSED, RidingCubeRight);
+
+	input.BindAction(GLFW_KEY_W, InputEventType::PRESSED, []() {
+		camera.ProcessKeyboard(CameraMovement::FORWARD, deltaTime);
+		});
+
+	input.BindAction(GLFW_KEY_A, InputEventType::PRESSED, []() {
+		camera.ProcessKeyboard(CameraMovement::LEFT, deltaTime);
+		});
+
+	input.BindAction(GLFW_KEY_S, InputEventType::PRESSED, []() {
+		camera.ProcessKeyboard(CameraMovement::BACKWARD, deltaTime);
+		});
+
+	input.BindAction(GLFW_KEY_D, InputEventType::PRESSED, []() {
+		camera.ProcessKeyboard(CameraMovement::RIGHT, deltaTime);
+		});
+
+	input.BindAction(GLFW_KEY_ESCAPE, InputEventType::JUST_PRESSED, ManageESC);
 
 	// ---------------------------------
 	// light creation
@@ -392,7 +424,7 @@ int main() {
 	// --------------------------------------------------------------------------
 	while (!glfwWindowShouldClose(window))
 	{
-		processInput(window);
+		input.Process(window);
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
@@ -618,112 +650,6 @@ int main() {
 	glfwTerminate();
 
 	return 0;
-}
-
-void processInput(GLFWwindow* window)
-{
-	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-		if (!isUpPressed) {
-			isUpPressed = true;
-		}
-	}
-	else {
-		isUpPressed = false;
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-		if (!isDownPressed) {
-			isDownPressed = true;
-		}
-	}
-	else {
-		isDownPressed = false;
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS) {
-		if (!isEnterPressed) {
-			isEnterPressed = true;
-		}
-	}
-	else {
-		isEnterPressed = false;
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-		if (!isLeftPressed) {
-			isLeftPressed = true;
-		}
-		ridingCube->SetPosition(ridingCube->GetPosition().x - cubeSpeed * deltaTime, ridingCube->GetPosition().y, ridingCube->GetPosition().z);
-	}
-	else {
-		isLeftPressed = false;
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-		if (!isRightPressed) {
-			isRightPressed = true;
-		}
-		ridingCube->SetPosition(ridingCube->GetPosition().x + cubeSpeed * deltaTime, ridingCube->GetPosition().y, ridingCube->GetPosition().z);
-	}
-	else {
-		isRightPressed = false;
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-		camera.ProcessKeyboard(FORWARD, deltaTime);
-		if (!isWPressed) {
-			isWPressed = true;
-		}
-	}
-	else {
-		isWPressed = false;
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-		camera.ProcessKeyboard(BACKWARD, deltaTime);
-		if (!isSPressed) {
-			isSPressed = true;
-		}
-	}
-	else {
-		isSPressed = false;
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-		camera.ProcessKeyboard(LEFT, deltaTime);
-		if (!isAPressed) {
-			isAPressed = true;
-		}
-	}
-	else {
-		isAPressed = false;
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-		camera.ProcessKeyboard(RIGHT, deltaTime);
-		if (!isDPressed) {
-			isDPressed = true;
-		}
-	}
-	else {
-		isDPressed = false;
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-		if (!isEscapePressed){
-			if (!cursorHidden) {
-				glfwSetWindowShouldClose(window, true);
-			}
-			else {
-				cursorHidden = false;
-				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-			}
-			isEscapePressed = true;
-		}
-	}
-	else {
-		isEscapePressed = false;
-	}
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)

@@ -162,6 +162,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\camera.cpp" />
+    <ClCompile Include="src\input.cpp" />
     <ClCompile Include="src\light.cpp" />
     <ClCompile Include="src\shader.cpp" />
     <ClCompile Include="src\gldebugger.cpp" />
@@ -196,6 +197,7 @@
   <ItemGroup>
     <ClInclude Include="include\camera.h" />
     <ClInclude Include="include\gldebugger.h" />
+    <ClInclude Include="include\input.h" />
     <ClInclude Include="include\utils.h" />
     <ClInclude Include="vendor\glad\glad.h" />
     <ClInclude Include="vendor\GLFW\glfw3.h" />
