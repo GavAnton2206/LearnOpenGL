@@ -42,11 +42,10 @@ namespace std {
 
 class Input {
 public:
-	void Initialize();
-	void Process(GLFWwindow* window);
-	void BindAction(int key, InputEventType type, std::function<void()> callback);
+	static void Process(GLFWwindow* window);
+	static void BindAction(int key, InputEventType type, std::function<void()> callback);
 
 private:
-	std::array<KeyState, GLFW_KEY_LAST + 1> keyStates;
-	std::unordered_map<ActionBinding, std::function<void()>> actions;
+	static std::array<KeyState, GLFW_KEY_LAST + 1> keyStates;
+	static std::unordered_map<ActionBinding, std::function<void()>> actions;
 };

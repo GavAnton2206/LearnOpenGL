@@ -34,7 +34,6 @@ float lastFrame = 0.0f;
 // ------------------------------------------------
 // Systems
 GLDebugger glDebugger;
-Input input;
 
 // ------------------------------------------------
 // UI
@@ -88,25 +87,6 @@ float cubeSpeed = 15.0f;
 glm::vec3 lightPos;
 float lightOrbitRadius = 10.0f;
 
-// Temporary
-void RidingCubeLeft() {
-	ridingCube->SetPosition(ridingCube->GetPosition().x - cubeSpeed * deltaTime, ridingCube->GetPosition().y, ridingCube->GetPosition().z);
-}
-
-void RidingCubeRight() {
-	ridingCube->SetPosition(ridingCube->GetPosition().x + cubeSpeed * deltaTime, ridingCube->GetPosition().y, ridingCube->GetPosition().z);
-}
-
-void ManageESC() {
-	if (!cursorHidden) {
-		glfwSetWindowShouldClose(window, true);
-	}
-	else {
-		cursorHidden = false;
-		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-	}
-}
-
 int main() {
 	glfwInit();
 	
@@ -156,26 +136,39 @@ int main() {
 	// Debugging
 	glDebugger.Setup();
 
-	input.BindAction(GLFW_KEY_LEFT, InputEventType::PRESSED, RidingCubeLeft);
-	input.BindAction(GLFW_KEY_RIGHT, InputEventType::PRESSED, RidingCubeRight);
+	Input::BindAction(GLFW_KEY_LEFT, InputEventType::PRESSED, []() {
+		ridingCube->SetPosition(ridingCube->GetPosition().x - cubeSpeed * deltaTime, ridingCube->GetPosition().y, ridingCube->GetPosition().z);
+		});
 
-	input.BindAction(GLFW_KEY_W, InputEventType::PRESSED, []() {
+	Input::BindAction(GLFW_KEY_RIGHT, InputEventType::PRESSED, []() {
+		ridingCube->SetPosition(ridingCube->GetPosition().x + cubeSpeed * deltaTime, ridingCube->GetPosition().y, ridingCube->GetPosition().z);
+		});
+
+	Input::BindAction(GLFW_KEY_W, InputEventType::PRESSED, []() {
 		camera.ProcessKeyboard(CameraMovement::FORWARD, deltaTime);
 		});
 
-	input.BindAction(GLFW_KEY_A, InputEventType::PRESSED, []() {
+	Input::BindAction(GLFW_KEY_A, InputEventType::PRESSED, []() {
 		camera.ProcessKeyboard(CameraMovement::LEFT, deltaTime);
 		});
 
-	input.BindAction(GLFW_KEY_S, InputEventType::PRESSED, []() {
+	Input::BindAction(GLFW_KEY_S, InputEventType::PRESSED, []() {
 		camera.ProcessKeyboard(CameraMovement::BACKWARD, deltaTime);
 		});
 
-	input.BindAction(GLFW_KEY_D, InputEventType::PRESSED, []() {
+	Input::BindAction(GLFW_KEY_D, InputEventType::PRESSED, []() {
 		camera.ProcessKeyboard(CameraMovement::RIGHT, deltaTime);
 		});
 
-	input.BindAction(GLFW_KEY_ESCAPE, InputEventType::JUST_PRESSED, ManageESC);
+	Input::BindAction(GLFW_KEY_ESCAPE, InputEventType::JUST_PRESSED, []() {
+			if (!cursorHidden) {
+				glfwSetWindowShouldClose(window, true);
+			}
+			else {
+				cursorHidden = false;
+				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+			}
+		});
 
 	// ---------------------------------
 	// light creation
@@ -424,7 +417,7 @@ int main() {
 	// --------------------------------------------------------------------------
 	while (!glfwWindowShouldClose(window))
 	{
-		input.Process(window);
+		Input::Process(window);
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();

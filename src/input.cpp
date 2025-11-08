@@ -40,7 +40,7 @@ void Input::BindAction(int key, InputEventType type, std::function<void()> callb
 
 	for (auto& [actionBinding, action] : actions) {
 		if (actionBinding.type == type && actionBinding.key == key) {
-			actions[actionBinding] = std::move(callback);
+			actions[actionBinding] = callback;
 			exists = true;
 		}
 	}
@@ -52,3 +52,6 @@ void Input::BindAction(int key, InputEventType type, std::function<void()> callb
 		actions[actionBinding] = std::move(callback);
 	}
 }
+
+std::array<KeyState, GLFW_KEY_LAST + 1> Input::keyStates;
+std::unordered_map<ActionBinding, std::function<void()>> Input::actions;
