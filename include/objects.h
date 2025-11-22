@@ -71,7 +71,7 @@ public:
 
     glm::mat4 GetModelMatrix();
 
-    void Draw();
+    void Draw(unsigned int type = GL_TEXTURE_2D);
 
     void SetPosition(glm::vec3 position_);
     void SetPosition(float x, float y, float z);

@@ -181,6 +181,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\depth\LinearDepth.frag" />
+    <None Include="assets\shaders\skybox\FragmentShader.frag" />
+    <None Include="assets\shaders\skybox\VertexShader.vert" />
     <None Include="assets\shaders\unlit\FragmentShader.frag" />
     <None Include="assets\shaders\gourand\FragmentShader.frag" />
     <None Include="assets\shaders\lighting\FragmentShader.frag" />
@@ -223,6 +225,12 @@
     <Image Include="assets\textures\container2.png" />
     <Image Include="assets\textures\container2_emission.jpg" />
     <Image Include="assets\textures\container2_specular.png" />
+    <Image Include="assets\textures\skybox\back.png" />
+    <Image Include="assets\textures\skybox\bottom.png" />
+    <Image Include="assets\textures\skybox\front.png" />
+    <Image Include="assets\textures\skybox\left.png" />
+    <Image Include="assets\textures\skybox\right.png" />
+    <Image Include="assets\textures\skybox\top.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

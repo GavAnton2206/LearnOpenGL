@@ -72,7 +72,7 @@ glm::mat4 Object3D::GetModelMatrix() {
     return model;
 }
 
-void Object3D::Draw() {
+void Object3D::Draw(unsigned int type) {
     if (!drawn)
         return;
 
@@ -82,17 +82,17 @@ void Object3D::Draw() {
 
     if (texture1 != 0) {
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture1);
+        glBindTexture(type, texture1);
     }
 
     if (texture2 != 0) {
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, texture2);
+        glBindTexture(type, texture2);
     }
 
     if (texture3 != 0) {
         glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, texture3);
+        glBindTexture(type, texture3);
     }
 
     if (texture1 == 0 && texture2 == 0 && texture3 == 0) {

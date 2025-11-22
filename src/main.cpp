@@ -20,7 +20,10 @@
 #include <random>
 #include <iostream>
 #include <string>
-#include <vector>
+
+using std::vector;
+using std::iostream;
+using std::string;
 
 // ------------------------------------------------
 // Engine-related
@@ -60,6 +63,7 @@ Shader litShader;
 Shader litTexShader;
 Shader lightShader;
 Shader colorShader;
+Shader skyboxShader;
 
 // --------------------------------------------------------
 // Camera
@@ -71,10 +75,13 @@ DirectionLight dirLight(glm::vec3(-0.2f, -1.0f, -0.3f), glm::vec3(0.3f),
 SpotLight spotLights[1]; // NR_POINT_LIGHTS in shaders
 PointLight pointLights[1]; // NR_SPOT_LIGHTS in shaders
 
+// Skybox
+Object3D* skybox;
+
 // --------------------------------------------------------
 // Rigidbody Objects
-std::vector<Rigidbody> bouncingObjects;
-std::vector<Rigidbody*> physicsObjects;
+vector<Rigidbody> bouncingObjects;
+vector<Rigidbody*> physicsObjects;
 
 Rigidbody* ridingCube = nullptr;
 
@@ -189,13 +196,6 @@ int main() {
 
 	pointLights[0] = PointLight(0, 1.0f, ambient, diffuseLamp, glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f));
 
-	// ---------------------------------
-	// shaders file translation
-	litShader = Shader("assets/shaders/lit/VertexShader.vert", "assets/shaders/lit/FragmentShader.frag");
-	litTexShader = Shader("assets/shaders/lit/VertexShaderTex.vert", "assets/shaders/lit/FragmentShaderTex.frag");
-	lightShader = Shader("assets/shaders/lighting/VertexShader.vert", "assets/shaders/lighting/FragmentShader.frag");
-	colorShader = Shader("assets/shaders/unlit/VertexShader.vert", "assets/shaders/unlit/FragmentShader.frag");
-
 	// --------------------------------
 	// texture
 	unsigned int boxDiffuseMap = loadTexture("assets/textures/container2.png");
@@ -206,11 +206,32 @@ int main() {
 	unsigned int boardsSpecularMap = loadTexture("assets/textures/boards_specular.png");
 	unsigned int boardsEmissionMap = loadTexture("assets/textures/boards_emission.jpg");
 
+	vector<string> faces
+	{
+		"assets/textures/skybox/right.png",
+		"assets/textures/skybox/left.png",
+		"assets/textures/skybox/top.png",
+		"assets/textures/skybox/bottom.png",
+		"assets/textures/skybox/front.png",
+		"assets/textures/skybox/back.png"
+	};
+	unsigned int skycubeTexture = loadCubemap(faces);
+
+	// ---------------------------------
+	// shaders file translation
+	litShader = Shader("assets/shaders/lit/VertexShader.vert", "assets/shaders/lit/FragmentShader.frag");
+	litTexShader = Shader("assets/shaders/lit/VertexShaderTex.vert", "assets/shaders/lit/FragmentShaderTex.frag");
+	lightShader = Shader("assets/shaders/lighting/VertexShader.vert", "assets/shaders/lighting/FragmentShader.frag");
+	colorShader = Shader("assets/shaders/unlit/VertexShader.vert", "assets/shaders/unlit/FragmentShader.frag");
+	skyboxShader = Shader("assets/shaders/skybox/VertexShader.vert", "assets/shaders/skybox/FragmentShader.frag");
+
+	// shader settings
+	skyboxShader.use();
+
+	skyboxShader.setInt("skybox", 0);
 
 	// shader settings
 	litTexShader.use();
-
-	//litTexShader.setVec2("scaleUV", glm::vec2(1.0f));
 
 	litTexShader.setInt("material.diffuse", 0);
 	litTexShader.setInt("material.specular", 1);
@@ -269,6 +290,15 @@ int main() {
 		boardsSpecularMap,
 		boardsEmissionMap,
 		glm::vec2(1000.0f));
+
+	skybox = new Object3D(glm::vec3(0.0f, 0.0f, 0.0f),
+		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+		glm::vec3(1.0f, 1.0f, 1.0f),
+		cubeVAO,
+		skyboxShader,
+		36,
+		false,
+		skycubeTexture);
 
 	float density = 1.0f;
 	glm::vec3 sphereColor = glm::vec3(1.0f, 1.0f, 0.0f);
@@ -396,6 +426,7 @@ int main() {
 	physicsObjects.push_back(ridingCube);
 
 	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
 	
 	glEnable(GL_STENCIL_TEST);
 
@@ -443,7 +474,6 @@ int main() {
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 
 		glStencilMask(0x00);
-		floor.Draw();
 
 		// light and shaders
 		lightShader.use();
@@ -466,12 +496,16 @@ int main() {
 		colorShader.setMat4("projection", projection);
 		colorShader.setVec3("viewPos", camera.Position);
 
+		skyboxShader.use();
+		skyboxShader.setMat4("view", view);
+		skyboxShader.setMat4("projection", projection);
+
 		spotLights[0].position = camera.Position;
 		spotLights[0].direction = camera.Front;
 
 		pointLights[0].position = lightPos;
 
-		std::vector<Shader> shaders;
+		vector<Shader> shaders;
 		shaders.push_back(litShader);
 		shaders.push_back(litTexShader);
 		shaders.push_back(lightShader);
@@ -479,9 +513,6 @@ int main() {
 		int j = 0;
 		for (auto it = std::begin(spotLights); it != std::end(spotLights); ++it, j++) {	
 			it->Update(shaders, true, j);
-			//it->Update(litShader, true, j);
-			//it->Update(litTexShader, true, j);
-			//it->Update(lightShader, true, j);
 		}
 		j = 0;
 		for (auto it = std::begin(pointLights); it != std::end(pointLights); ++it, j++) {
@@ -490,8 +521,22 @@ int main() {
 			it->Update(lightShader, true, j);
 		}
 
+		// skybox 
+		glDepthMask(GL_FALSE);
+		glDisable(GL_STENCIL_TEST);
+		glDisable(GL_BLEND);
+		glCullFace(GL_FRONT);
 
-		// movement
+		skybox->Draw(GL_TEXTURE_CUBE_MAP);
+
+		glCullFace(GL_BACK);
+		glEnable(GL_BLEND);
+		glEnable(GL_STENCIL_TEST);
+		glDepthMask(GL_TRUE);
+
+		// floor
+		floor.Draw();
+
 		// light cube
 		float lightX = sin(glfwGetTime()) * lightOrbitRadius;
 		float lightZ = cos(glfwGetTime()) * lightOrbitRadius;
@@ -623,6 +668,8 @@ int main() {
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
+	delete skybox;
+
 	glDeleteVertexArrays(1, &cubeVAO);
 	glDeleteBuffers(1, &cubeVBO);
 	glDeleteVertexArrays(1, &sphereVAO);
@@ -720,6 +767,43 @@ unsigned int loadTexture(char const* path)
 		std::cout << "Texture failed to load at path: " << path << std::endl;
 		stbi_image_free(data);
 	}
+
+	return textureID;
+}
+
+unsigned int loadCubemap(vector<string> faces)
+{
+	unsigned int textureID;
+	glGenTextures(1, &textureID);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+	int width, height, nrChannels;
+	for (int i = 0; i < faces.size(); i++) {
+		unsigned char* data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+		if (data) {
+			GLenum format;
+			if (nrChannels == 1)
+				format = GL_RED;
+			else if (nrChannels == 3)
+				format = GL_RGB;
+			else if (nrChannels == 4)
+				format = GL_RGBA;
+
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+			stbi_image_free(data);
+		}
+		else
+		{
+			std::cout << "Cubemap texture failed to load: " << faces[i] << std::endl;
+			stbi_image_free(data);
+		}
+	}
+
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
 	return textureID;
 }
@@ -850,7 +934,7 @@ void cubeMeshSetup(unsigned int& cubeVBO, unsigned int& cubeVAO) {
 }
 
 unsigned int sphereMeshSetup(unsigned int& sphereVBO, unsigned int& sphereVAO, unsigned int& sphereEBO, int stacks, int sectors) {
-	std::vector<float> vertices;
+	vector<float> vertices;
 
 	for (int i = 0; i <= stacks; ++i) {
 		float stackAngle = glm::pi<float>() / 2.0f - i * (glm::pi<float>() / stacks); // from pi/2 to -pi/2
@@ -885,7 +969,7 @@ unsigned int sphereMeshSetup(unsigned int& sphereVBO, unsigned int& sphereVAO, u
 		}
 	}
 
-	std::vector<unsigned int> indices;
+	vector<unsigned int> indices;
 	for (int i = 0; i < stacks; ++i) {
 		int k1 = i * (sectors + 1);     // beginning of current stack
 		int k2 = k1 + sectors + 1;      // beginning of next stack

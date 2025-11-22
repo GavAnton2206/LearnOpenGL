@@ -85,6 +85,8 @@
     <None Include="assets\shaders\depth\LinearDepth.frag" />
     <None Include="assets\shaders\unlit\FragmentShader.frag" />
     <None Include="assets\shaders\unlit\VertexShader.vert" />
+    <None Include="assets\shaders\skybox\FragmentShader.frag" />
+    <None Include="assets\shaders\skybox\VertexShader.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vendor\stb_image\stb_image.h">
@@ -165,6 +167,24 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="assets\textures\container2_emission.jpg">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\textures\skybox\back.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\textures\skybox\bottom.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\textures\skybox\front.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\textures\skybox\left.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\textures\skybox\right.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\textures\skybox\top.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
