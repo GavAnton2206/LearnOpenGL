@@ -64,6 +64,7 @@ Shader litTexShader;
 Shader lightShader;
 Shader colorShader;
 Shader skyboxShader;
+Shader normalShader;
 
 // --------------------------------------------------------
 // Camera
@@ -181,10 +182,9 @@ int main() {
 	// light creation
 	glm::vec3 ambient = glm::vec3(0.0f);
 
-	glm::vec3 red = glm::vec3(1.0f, 0.0f, 1.0f);
-	glm::vec3 diffuseFlashlight = red * glm::vec3(2.0f);
-
 	glm::vec3 white = glm::vec3(1.0f, 1.0f, 1.0f);
+	glm::vec3 diffuseFlashlight = white * glm::vec3(2.0f);
+
 	glm::vec3 diffuseLamp = white * glm::vec3(2.0f);
 
 	dirLight = DirectionLight(glm::vec3(-0.2f, -1.0f, -0.3f), glm::vec3(0.1f),
@@ -198,13 +198,16 @@ int main() {
 
 	// --------------------------------
 	// texture
-	unsigned int boxDiffuseMap = loadTexture("assets/textures/container2.png");
-	unsigned int boxSpecularMap = loadTexture("assets/textures/container2_specular.png");
-	unsigned int boxEmissionMap = loadTexture("assets/textures/container2_emission.jpg");
+	unsigned int boxDiffuseMap = loadTexture("assets/textures/container/container.png");
+	unsigned int boxSpecularMap = loadTexture("assets/textures/container/container_specular.png");
+	unsigned int boxEmissionMap = loadTexture("assets/textures/container/container_emission.jpg");
 
-	unsigned int boardsDiffuseMap = loadTexture("assets/textures/boards.png");
-	unsigned int boardsSpecularMap = loadTexture("assets/textures/boards_specular.png");
-	unsigned int boardsEmissionMap = loadTexture("assets/textures/boards_emission.jpg");
+	unsigned int brickwallDiffuseMap = loadTexture("assets/textures/brickwall/brickwall.jpg");
+	unsigned int brickwallNormalMap = loadTexture("assets/textures/brickwall/brickwall_normal.jpg");
+
+	unsigned int boardsDiffuseMap = loadTexture("assets/textures/boards/boards.png");
+	unsigned int boardsSpecularMap = loadTexture("assets/textures/boards/boards_specular.png");
+	unsigned int boardsEmissionMap = loadTexture("assets/textures/boards/boards_emission.jpg");
 
 	vector<string> faces
 	{
@@ -221,6 +224,7 @@ int main() {
 	// shaders file translation
 	litShader = Shader("assets/shaders/lit/VertexShader.vert", "assets/shaders/lit/FragmentShader.frag");
 	litTexShader = Shader("assets/shaders/lit/VertexShaderTex.vert", "assets/shaders/lit/FragmentShaderTex.frag");
+	normalShader = Shader("assets/shaders/normal/VertexShader.vert", "assets/shaders/normal/FragmentShader.frag");
 	lightShader = Shader("assets/shaders/lighting/VertexShader.vert", "assets/shaders/lighting/FragmentShader.frag");
 	colorShader = Shader("assets/shaders/unlit/VertexShader.vert", "assets/shaders/unlit/FragmentShader.frag");
 	skyboxShader = Shader("assets/shaders/skybox/VertexShader.vert", "assets/shaders/skybox/FragmentShader.frag");
@@ -238,6 +242,15 @@ int main() {
 	litTexShader.setInt("material.emission", 2);
 	litTexShader.setFloat("material.shininess", 32.0f);
 
+	// shader settings
+	normalShader.use();
+
+	normalShader.setInt("material.diffuse", 0);
+	normalShader.setInt("material.specular", 1);
+	normalShader.setInt("material.emission", 2);
+	normalShader.setInt("material.normal", 3);
+	normalShader.setFloat("material.shininess", 32.0f);
+
 	// lit shader
 	litShader.use();
 
@@ -249,15 +262,18 @@ int main() {
 	// light setup
 	dirLight.Setup(litShader, true);
 	dirLight.Setup(litTexShader, true);
+	dirLight.Setup(normalShader, true);
 	dirLight.Setup(lightShader, true);
 	for (auto it = std::begin(spotLights); it != std::end(spotLights); ++it) {
 		it->Setup(litShader, true);
 		it->Setup(litTexShader, true);
+		it->Setup(normalShader, true);
 		it->Setup(lightShader, true);
 	}
 	for (auto it = std::begin(pointLights); it != std::end(pointLights); ++it) {
 		it->Setup(litShader, true);
 		it->Setup(litTexShader, true);
+		it->Setup(normalShader, true);
 		it->Setup(lightShader, true);
 	}
 
@@ -289,6 +305,7 @@ int main() {
 		boardsDiffuseMap,
 		boardsSpecularMap,
 		boardsEmissionMap,
+		0,
 		glm::vec2(1000.0f));
 
 	skybox = new Object3D(glm::vec3(0.0f, 0.0f, 0.0f),
@@ -311,7 +328,7 @@ int main() {
 		sphereVerticesNum,
 		true,
 		4.0 / 3.0 * glm::pi<float>() * pow(0.545f, 2) * density,
-		ObjectType::DYNAMIC, 0, 0, 0, glm::vec2(0.0f), sphereColor));
+		ObjectType::DYNAMIC, 0, 0, 0, 0, glm::vec2(0.0f), sphereColor));
 
 	bouncingObjects.push_back(Rigidbody(glm::vec3(-6.0f, 7.0f, 0.0f),
 		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
@@ -321,7 +338,7 @@ int main() {
 		sphereVerticesNum,
 		true,
 		4.0 / 3.0 * glm::pi<float>() * pow(0.545f, 2) * density,
-		ObjectType::DYNAMIC, 0, 0, 0, glm::vec2(0.0f), sphereColor));
+		ObjectType::DYNAMIC, 0, 0, 0, 0, glm::vec2(0.0f), sphereColor));
 
 	bouncingObjects.push_back(Rigidbody(glm::vec3(-6.0f, 10.0f, 0.0f),
 		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
@@ -331,7 +348,7 @@ int main() {
 		sphereVerticesNum,
 		true,
 		4.0 / 3.0 * glm::pi<float>() * pow(0.545f, 2) * density,
-		ObjectType::DYNAMIC, 0, 0, 0, glm::vec2(0.0f), sphereColor));
+		ObjectType::DYNAMIC, 0, 0, 0, 0, glm::vec2(0.0f), sphereColor));
 
 	bouncingObjects.push_back(Rigidbody(glm::vec3(-6.0f, 1.0f, 0.0f),
 		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
@@ -341,7 +358,7 @@ int main() {
 		sphereVerticesNum,
 		true,
 		4.0 / 3.0 * glm::pi<float>() * pow(0.545f, 2) * density,
-		ObjectType::DYNAMIC, 0, 0, 0, glm::vec2(0.0f), sphereColor));
+		ObjectType::DYNAMIC, 0, 0, 0, 0, glm::vec2(0.0f), sphereColor));
 
 	bouncingObjects.push_back(Rigidbody(glm::vec3(-10.0f, 4.0f, 0.0f),
 		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
@@ -351,7 +368,7 @@ int main() {
 		sphereVerticesNum,
 		true,
 		4.0 / 3.0 * glm::pi<float>() * pow(0.545f, 2) * density,
-		ObjectType::DYNAMIC, 0, 0, 0, glm::vec2(0.0f), sphereColor));
+		ObjectType::DYNAMIC, 0, 0, 0, 0, glm::vec2(0.0f), sphereColor));
 
 	bouncingObjects.push_back(Rigidbody(glm::vec3(6.0f, 4.0f, 0.0f),
 		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
@@ -392,6 +409,18 @@ int main() {
 		boxSpecularMap,
 		boxEmissionMap);
 
+	Object3D brickwall = Object3D(glm::vec3(0.0f, 0.0f, 0.0f),
+		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+		glm::vec3(1.0f, 1.0f, 1.0f),
+		cubeVAO,
+		normalShader,
+		36,
+		false,
+		brickwallDiffuseMap,
+		0,
+		0,
+		brickwallNormalMap);
+
 	ridingCube = new Rigidbody(glm::vec3(0.0f, -1.0f, 0.0f),
 		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
 		glm::vec3(1.0f, 1.0f, 1.0f),
@@ -413,7 +442,7 @@ int main() {
 		sphereVerticesNum,
 		true,
 		4.0 / 3.0 * glm::pi<float>() * pow(0.545f, 2) * density,
-		ObjectType::DYNAMIC, 0, 0, 0, glm::vec2(0.0f), sphereColor);
+		ObjectType::DYNAMIC, 0, 0, 0, 0, glm::vec2(0.0f), sphereColor);
 
 	// Physics Objects
 	for (unsigned int i = 0; i < bouncingObjects.size(); i++)
@@ -486,6 +515,11 @@ int main() {
 		litTexShader.setMat4("projection", projection);
 		litTexShader.setVec3("viewPos", camera.Position);
 
+		normalShader.use();
+		normalShader.setMat4("view", view);
+		normalShader.setMat4("projection", projection);
+		normalShader.setVec3("viewPos", camera.Position);
+
 		litShader.use();
 		litShader.setMat4("view", view);
 		litShader.setMat4("projection", projection);
@@ -508,6 +542,7 @@ int main() {
 		vector<Shader> shaders;
 		shaders.push_back(litShader);
 		shaders.push_back(litTexShader);
+		shaders.push_back(normalShader);
 		shaders.push_back(lightShader);
 
 		int j = 0;
@@ -518,6 +553,7 @@ int main() {
 		for (auto it = std::begin(pointLights); it != std::end(pointLights); ++it, j++) {
 			it->Update(litShader, true, j);
 			it->Update(litTexShader, true, j);
+			it->Update(normalShader, true, j);
 			it->Update(lightShader, true, j);
 		}
 
@@ -545,6 +581,8 @@ int main() {
 		lightCube.SetPosition(lightPos);
 
 		lightCube.Draw();
+
+		brickwall.Draw();
 
 		// Bouncing Objects
 	
@@ -1163,7 +1201,7 @@ void resolveSpecialCollision(Rigidbody& A, Rigidbody& B, const CollisionInfo& in
 void DrawWithOutline(Object3D obj, Shader& shader_, glm::vec3 color)
 {
 	Object3D outline = Object3D(obj.position, obj.rotation, obj.scale * 1.05f, obj.VAO, shader_,
-		obj.indexCount, obj.drawElements, 0, 0, 0, glm::vec2(0.0f), glm::vec3(0.0f));
+		obj.indexCount, obj.drawElements, 0, 0, 0, 0, glm::vec2(0.0f), glm::vec3(0.0f));
 
 	glStencilFunc(GL_ALWAYS, 1, 0xFF);
 	glStencilMask(0xFF);

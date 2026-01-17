@@ -28,7 +28,7 @@ Object3D::Object3D(glm::vec3 position_, glm::vec3 rotation_, glm::vec3 scale_,
     Shader& shader_,
     unsigned int indexCount_,
     bool drawElements_,
-    unsigned int texture1_, unsigned int texture2_, unsigned int texture3_, 
+    unsigned int texture1_, unsigned int texture2_, unsigned int texture3_, unsigned int texture4_,
     glm::vec2 UVScale_, glm::vec3 color_) : 
     shader(shader_), VAO(VAO_), UVScale(UVScale_), color(color_)
 {
@@ -39,6 +39,7 @@ Object3D::Object3D(glm::vec3 position_, glm::vec3 rotation_, glm::vec3 scale_,
     texture1 = texture1_;
     texture2 = texture2_;
     texture3 = texture3_;
+    texture4 = texture4_;
     drawElements = drawElements_;
     drawn = true;
 };
@@ -50,6 +51,7 @@ Object3D& Object3D::operator=(const Object3D& other) {
     this->texture1 = other.texture1;
     this->texture2 = other.texture2;
     this->texture3 = other.texture3;
+    this->texture4 = other.texture4;
     this->VAO = other.VAO;
     this->shader = other.shader;
     this->drawElements = other.drawElements;
@@ -95,7 +97,12 @@ void Object3D::Draw(unsigned int type) {
         glBindTexture(type, texture3);
     }
 
-    if (texture1 == 0 && texture2 == 0 && texture3 == 0) {
+    if (texture4 != 0) {
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(type, texture4);
+    }
+
+    if (texture1 == 0) {
         //shader.setVec3("material.ambient", color);
         shader.setVec3("material.diffuse", color);
     }
@@ -151,9 +158,9 @@ Rigidbody::Rigidbody(glm::vec3 position_, glm::vec3 rotation_, glm::vec3 scale_,
     float mass_,
     ObjectType type_,
     //ShapeType shape_ = SphereShape(glm::vec3(0.0f), -1.0f),
-    unsigned int texture1_, unsigned int texture2_, unsigned int texture3_,
+    unsigned int texture1_, unsigned int texture2_, unsigned int texture3_, unsigned int texture4_,
     glm::vec2 UVScale, glm::vec3 color) : 
-    Object3D(position_, rotation_, scale_, VAO_, shader_, indexCount_, drawElements_, texture1_, texture2_, texture3_, UVScale, color)
+    Object3D(position_, rotation_, scale_, VAO_, shader_, indexCount_, drawElements_, texture1_, texture2_, texture3_, texture4_, UVScale, color)
 {
     velocity = glm::vec3(0.0f);
     acceleration = glm::vec3(0.0f);
@@ -181,6 +188,7 @@ Rigidbody& Rigidbody::operator=(const Rigidbody& other) {
     this->texture1 = other.texture1;
     this->texture2 = other.texture2;
     this->texture3 = other.texture3;
+    this->texture4 = other.texture4;
     this->VAO = other.VAO;
     this->shader = other.shader;
     this->drawElements = other.drawElements;
