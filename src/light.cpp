@@ -1,12 +1,14 @@
 #include "light.h"
 
-DirectionLight::DirectionLight(glm::vec3 dir_, glm::vec3 ambient_, glm::vec3 diffuse_, glm::vec3 specular_) :
+DirectionLight::DirectionLight(glm::vec3 dir_, glm::vec3 ambient_, glm::vec3 diffuse_, glm::vec3 specular_, glm::vec3 color_, float intensity_) :
         direction(dir_), 
         ambient(ambient_), 
         diffuse(diffuse_), 
         specular(specular_), 
         shown(true), 
-        isShowing(true) {}
+        isShowing(true),
+        color(color_),
+        intensity(intensity_) {}
 
 void DirectionLight::Setup(Shader& shader, bool use) {
     if (use)
@@ -16,6 +18,10 @@ void DirectionLight::Setup(Shader& shader, bool use) {
     shader.setVec3("dirLight.ambient", ambient);
     shader.setVec3("dirLight.diffuse", diffuse);
     shader.setVec3("dirLight.specular", specular);
+
+    shader.setVec3("dirLight.color", color);
+    shader.setFloat("dirLight.intensity", intensity);
+
 }
 
 void DirectionLight::Update(Shader& shader, bool use) {
@@ -25,11 +31,14 @@ void DirectionLight::Update(Shader& shader, bool use) {
     if (isShowing && !shown) {
         shader.setVec3("dirLight.ambient", glm::vec3(0.0f, 0.0f, 0.0f));
         shader.setVec3("dirLight.diffuse", glm::vec3(0.0f, 0.0f, 0.0f));
+        shader.setFloat("dirLight.intensity", 0.0f);
         isShowing = false;
     }
     else if (!isShowing && shown) {
         shader.setVec3("dirLight.ambient", ambient);
         shader.setVec3("dirLight.diffuse", diffuse);
+        shader.setVec3("dirLight.color", color);
+        shader.setFloat("dirLight.intensity", intensity);
         isShowing = true;
     }
 
@@ -46,10 +55,13 @@ void DirectionLight::Update(std::vector<Shader>& shaders, bool use, int id_) {
         if (isShowing && !shown) {
             shader.setVec3("dirLight.ambient", glm::vec3(0.0f, 0.0f, 0.0f));
             shader.setVec3("dirLight.diffuse", glm::vec3(0.0f, 0.0f, 0.0f));
+            shader.setFloat("dirLight.intensity", 0.0f);
         }
         else if (!isShowing && shown) {
             shader.setVec3("dirLight.ambient", ambient);
             shader.setVec3("dirLight.diffuse", diffuse);
+            shader.setVec3("dirLight.color", color);
+            shader.setFloat("dirLight.intensity", intensity);
         }
     }
 
@@ -63,7 +75,7 @@ void DirectionLight::Update(std::vector<Shader>& shaders, bool use, int id_) {
 
 
 SpotLight::SpotLight(int id_, float cutOff_, float outerCutOff_, glm::vec3 ambient_, glm::vec3 diffuse_,
-                     glm::vec3 specular_, glm::vec3 position_, glm::vec3 dir_) 
+                     glm::vec3 specular_, glm::vec3 position_, glm::vec3 dir_, glm::vec3 color_, float intensity_)
                : id(id_), 
                  cutOff(cutOff_), 
                  outerCutOff(outerCutOff_), 
@@ -73,7 +85,9 @@ SpotLight::SpotLight(int id_, float cutOff_, float outerCutOff_, glm::vec3 ambie
                  diffuse(diffuse_), 
                  specular(specular_), 
                  shown(true), 
-                 isShowing(true) {}
+                 isShowing(true),
+                 color(color_),
+                 intensity(intensity_) {}
 
 void SpotLight::Setup(Shader& shader, bool use, int id_) {
     if (use)
@@ -94,6 +108,9 @@ void SpotLight::Setup(Shader& shader, bool use, int id_) {
     shader.setVec3(Id + "ambient", ambient);
     shader.setVec3(Id + "diffuse", diffuse);
     shader.setVec3(Id + "specular", specular);
+
+    shader.setVec3(Id + "color", color);
+    shader.setFloat(Id + "intensity", intensity);
 }
 
 void SpotLight::Update(Shader& shader, bool use, int id_) {
@@ -109,11 +126,14 @@ void SpotLight::Update(Shader& shader, bool use, int id_) {
     if (isShowing && !shown) {
         shader.setVec3(Id + "ambient", glm::vec3(0.0f, 0.0f, 0.0f));
         shader.setVec3(Id + "diffuse", glm::vec3(0.0f, 0.0f, 0.0f));
+        shader.setFloat(Id + "intensity", 0.0f);
         isShowing = false;
     }
     else if (!isShowing && shown) {
         shader.setVec3(Id + "ambient", ambient);
         shader.setVec3(Id + "diffuse", diffuse);
+        shader.setVec3(Id + "color", color);
+        shader.setFloat(Id + "intensity", intensity);
         isShowing = true;
     }
 
@@ -137,10 +157,13 @@ void SpotLight::Update(std::vector<Shader>& shaders, bool use, int id_) {
         if (isShowing && !shown) {
             shader.setVec3(Id + "ambient", glm::vec3(0.0f, 0.0f, 0.0f));
             shader.setVec3(Id + "diffuse", glm::vec3(0.0f, 0.0f, 0.0f));
+            shader.setFloat(Id + "intensity", 0.0f);
         }
         else if (!isShowing && shown) {
             shader.setVec3(Id + "ambient", ambient);
             shader.setVec3(Id + "diffuse", diffuse);
+            shader.setVec3(Id + "color", color);
+            shader.setFloat(Id + "intensity", intensity);
         }
 
         shader.setVec3(Id + "position", position);
@@ -157,7 +180,7 @@ void SpotLight::Update(std::vector<Shader>& shaders, bool use, int id_) {
 
 
 PointLight::PointLight(int id_, float radius, glm::vec3 ambient_, glm::vec3 diffuse_,
-        glm::vec3 specular_, glm::vec3 position_, float constant_, float linear_, float quadratic_) 
+        glm::vec3 specular_, glm::vec3 position_, float constant_, float linear_, float quadratic_, glm::vec3 color_, float intensity_, float radius_)
     : id(id_), 
     constant(constant_), 
     linear(linear_), 
@@ -167,7 +190,10 @@ PointLight::PointLight(int id_, float radius, glm::vec3 ambient_, glm::vec3 diff
     diffuse(diffuse_), 
     specular(specular_), 
     shown(true), 
-    isShowing(true)
+    isShowing(true),
+    color(color_),
+    radius(radius_),
+    intensity(intensity_)
     {
         if (radius != -1.0f && constant_ == 1.0f && linear_ == 0.0f && quadratic_ == 0.0f) {
             UpdateRadius(radius);
@@ -180,8 +206,6 @@ void PointLight::UpdateRadius(float radius) {
     constant = 1.0f;
     linear = 0.22f;
     quadratic = 0.2f;
-    //linear = (1 - radiusLight) / radiusLight * (2 / radius);
-    //quadratic = (1 - radiusLight) / radiusLight * (1 / pow(radius, 2));
 }
 
 void PointLight::Setup(Shader& shader, bool use, int id_) {
@@ -203,6 +227,10 @@ void PointLight::Setup(Shader& shader, bool use, int id_) {
     shader.setVec3(Id + "ambient", ambient);
     shader.setVec3(Id + "diffuse", diffuse);
     shader.setVec3(Id + "specular", specular);
+
+    shader.setVec3(Id + "color", color);
+    shader.setFloat(Id + "intensity", intensity);
+    shader.setFloat(Id + "radius", radius);
 }
 
 void PointLight::Update(Shader& shader, bool use, int id_) {
@@ -218,11 +246,16 @@ void PointLight::Update(Shader& shader, bool use, int id_) {
     if (isShowing && !shown) {
         shader.setVec3(Id + "ambient", glm::vec3(0.0f, 0.0f, 0.0f));
         shader.setVec3(Id + "diffuse", glm::vec3(0.0f, 0.0f, 0.0f));
+        shader.setFloat(Id + "radius", 0.0f);
+        shader.setFloat(Id + "intensity", 0.0f);
         isShowing = false;
     }
     else if (!isShowing && shown) {
         shader.setVec3(Id + "ambient", ambient);
         shader.setVec3(Id + "diffuse", diffuse);
+        shader.setVec3(Id + "color", color);
+        shader.setFloat(Id + "radius", radius);
+        shader.setFloat(Id + "intensity", intensity);
         isShowing = true;
     }
 
@@ -245,10 +278,15 @@ void PointLight::Update(std::vector<Shader>& shaders, bool use, int id_) {
         if (isShowing && !shown) {
             shader.setVec3(Id + "ambient", glm::vec3(0.0f, 0.0f, 0.0f));
             shader.setVec3(Id + "diffuse", glm::vec3(0.0f, 0.0f, 0.0f));
+            shader.setFloat(Id + "radius", 0.0f);
+            shader.setFloat(Id + "intensity", 0.0f);
         }
         else if (!isShowing && shown) {
             shader.setVec3(Id + "ambient", ambient);
             shader.setVec3(Id + "diffuse", diffuse);
+            shader.setVec3(Id + "color", color);
+            shader.setFloat(Id + "radius", radius);
+            shader.setFloat(Id + "intensity", intensity);
         }
 
         shader.setVec3(Id + "position", position);

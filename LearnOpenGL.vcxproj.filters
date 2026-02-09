@@ -89,6 +89,8 @@
     <None Include="assets\shaders\skybox\VertexShader.vert" />
     <None Include="assets\shaders\lit\FragmentShaderTex.frag" />
     <None Include="assets\shaders\normal\VertexShader.vert" />
+    <None Include="assets\shaders\pbr\VertexShaderTex.vert" />
+    <None Include="assets\shaders\pbr\FragmentShaderTex.frag" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vendor\stb_image\stb_image.h">

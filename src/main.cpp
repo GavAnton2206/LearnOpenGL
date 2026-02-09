@@ -61,6 +61,7 @@ bool cursorHidden = true;
 // Shaders
 Shader litShader;
 Shader litTexShader;
+Shader pbrShader;
 Shader lightShader;
 Shader colorShader;
 Shader skyboxShader;
@@ -72,7 +73,7 @@ Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 // Lights
 DirectionLight dirLight(glm::vec3(-0.2f, -1.0f, -0.3f), glm::vec3(0.3f),
-	glm::vec3(0.4f, 0.4f, 0.4f), glm::vec3(0.5f, 0.5f, 0.5f));
+	glm::vec3(0.4f, 0.4f, 0.4f), glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(238.0f/255.0f, 255.0f/255.0f, 89.0f / 255.0f), 0.3f);
 SpotLight spotLights[1]; // NR_POINT_LIGHTS in shaders
 PointLight pointLights[1]; // NR_SPOT_LIGHTS in shaders
 
@@ -187,14 +188,12 @@ int main() {
 
 	glm::vec3 diffuseLamp = white * glm::vec3(2.0f);
 
-	dirLight = DirectionLight(glm::vec3(-0.2f, -1.0f, -0.3f), glm::vec3(0.1f),
-		glm::vec3(0.4f, 0.4f, 0.4f), glm::vec3(0.5f, 0.5f, 0.5f));
-
 	spotLights[0] = SpotLight(0, glm::cos(glm::radians(5.5f)), glm::cos(glm::radians(8.5f)),
 		ambient, diffuseFlashlight, glm::vec3(1.0f, 1.0f, 1.0f),
-		camera.Position, camera.Front);
+		camera.Position, camera.Front, glm::vec3(1.0f), 0.75f);
 
-	pointLights[0] = PointLight(0, 1.0f, ambient, diffuseLamp, glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f));
+	pointLights[0] = PointLight(0, 1.0f, ambient, diffuseLamp, glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f), 1.0f, 0.0f, 0.0f, 
+								glm::vec3(1.0f), 1.0f, 1.0f);
 
 	// --------------------------------
 	// texture
@@ -224,6 +223,7 @@ int main() {
 	// shaders file translation
 	litShader = Shader("assets/shaders/lit/VertexShader.vert", "assets/shaders/lit/FragmentShader.frag");
 	litTexShader = Shader("assets/shaders/lit/VertexShaderTex.vert", "assets/shaders/lit/FragmentShaderTex.frag");
+	pbrShader = Shader("assets/shaders/pbr/VertexShaderTex.vert", "assets/shaders/pbr/FragmentShaderTex.frag");
 	normalShader = Shader("assets/shaders/normal/VertexShader.vert", "assets/shaders/normal/FragmentShader.frag");
 	lightShader = Shader("assets/shaders/lighting/VertexShader.vert", "assets/shaders/lighting/FragmentShader.frag");
 	colorShader = Shader("assets/shaders/unlit/VertexShader.vert", "assets/shaders/unlit/FragmentShader.frag");
@@ -241,6 +241,14 @@ int main() {
 	litTexShader.setInt("material.specular", 1);
 	litTexShader.setInt("material.emission", 2);
 	litTexShader.setFloat("material.shininess", 32.0f);
+
+	// another shader settings
+	pbrShader.use();
+
+	pbrShader.setInt("material.diffuse", 0);
+	pbrShader.setInt("material.specular", 1);
+	pbrShader.setInt("material.emission", 2);
+	pbrShader.setFloat("material.shininess", 32.0f);
 
 	// shader settings
 	normalShader.use();
@@ -262,17 +270,20 @@ int main() {
 	// light setup
 	dirLight.Setup(litShader, true);
 	dirLight.Setup(litTexShader, true);
+	dirLight.Setup(pbrShader, true);
 	dirLight.Setup(normalShader, true);
 	dirLight.Setup(lightShader, true);
 	for (auto it = std::begin(spotLights); it != std::end(spotLights); ++it) {
 		it->Setup(litShader, true);
 		it->Setup(litTexShader, true);
+		it->Setup(pbrShader, true);
 		it->Setup(normalShader, true);
 		it->Setup(lightShader, true);
 	}
 	for (auto it = std::begin(pointLights); it != std::end(pointLights); ++it) {
 		it->Setup(litShader, true);
 		it->Setup(litTexShader, true);
+		it->Setup(pbrShader, true);
 		it->Setup(normalShader, true);
 		it->Setup(lightShader, true);
 	}
@@ -425,7 +436,7 @@ int main() {
 		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
 		glm::vec3(1.0f, 1.0f, 1.0f),
 		cubeVAO,
-		litTexShader,
+		pbrShader,
 		36,
 		false,
 		1.0f * density,
@@ -516,6 +527,11 @@ int main() {
 		litTexShader.setMat4("projection", projection);
 		litTexShader.setVec3("viewPos", camera.Position);
 
+		pbrShader.use();
+		pbrShader.setMat4("view", view);
+		pbrShader.setMat4("projection", projection);
+		pbrShader.setVec3("viewPos", camera.Position);
+
 		normalShader.use();
 		normalShader.setMat4("view", view);
 		normalShader.setMat4("projection", projection);
@@ -543,6 +559,7 @@ int main() {
 		vector<Shader> shaders;
 		shaders.push_back(litShader);
 		shaders.push_back(litTexShader);
+		shaders.push_back(pbrShader);
 		shaders.push_back(normalShader);
 		shaders.push_back(lightShader);
 
@@ -554,6 +571,7 @@ int main() {
 		for (auto it = std::begin(pointLights); it != std::end(pointLights); ++it, j++) {
 			it->Update(litShader, true, j);
 			it->Update(litTexShader, true, j);
+			it->Update(pbrShader, true, j);
 			it->Update(normalShader, true, j);
 			it->Update(lightShader, true, j);
 		}

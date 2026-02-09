@@ -17,12 +17,17 @@ public:
     glm::vec3 diffuse;
     glm::vec3 specular;
 
+    glm::vec3 color;
+    float intensity;
+
     bool shown;
 
     DirectionLight(glm::vec3 dir_ = glm::vec3(0.0f),
                    glm::vec3 ambient_ = glm::vec3(0.0f),
                    glm::vec3 diffuse_ = glm::vec3(0.0f),
-                   glm::vec3 specular_ = glm::vec3(0.0f));
+                   glm::vec3 specular_ = glm::vec3(0.0f),
+                   glm::vec3 color_ = glm::vec3(1.0f),
+                   float intensity = 1.0f);
 
     void Setup(Shader& shader, bool use = false);
 
@@ -47,6 +52,9 @@ public:
     glm::vec3 diffuse;
     glm::vec3 specular;
 
+    glm::vec3 color;
+    float intensity;
+
     bool shown;
 
 
@@ -57,7 +65,9 @@ public:
         glm::vec3 diffuse_ = glm::vec3(0.0f),
         glm::vec3 specular_ = glm::vec3(0.0f),
         glm::vec3 position_ = glm::vec3(0.0f),
-        glm::vec3 dir_ = glm::vec3(0.0f));
+        glm::vec3 dir_ = glm::vec3(0.0f),
+        glm::vec3 color_ = glm::vec3(1.0f),
+        float intensity = 1.0f);
 
     void Setup(Shader& shader, bool use = false, int id_ = -1);
 
@@ -84,6 +94,10 @@ public:
     glm::vec3 diffuse;
     glm::vec3 specular;
 
+    glm::vec3 color;
+    float intensity;
+    float radius;
+
     bool shown;
 
     PointLight(int id_ = 0,
@@ -94,7 +108,10 @@ public:
         glm::vec3 position_ = glm::vec3(0.0f),
         float constant_ = 1.0,
         float linear_ = 0.0,
-        float quadratic_ = 0.0);
+        float quadratic_ = 0.0,
+        glm::vec3 color_ = glm::vec3(1.0f),
+        float intensity_ = 1.0f,
+        float radius_ = 0.0f);
 
     void UpdateRadius(float radius);
 
