@@ -1,16 +1,13 @@
 #### Custom
-build/
-
-/vendor/*
-
-!/vendor/**/*.h
-!/vendor/**/*.hpp
 
 imgui.ini
 
-*.exe
-*.obj
-*.pdb
+.vscode/launch.json
+
+##### Windows
+*.sln
+*.vcxproj
+*.vcxproj.filters
 
 ## Prebuilt ##
 ##### Windows
@@ -70,6 +67,7 @@ $RECYCLE.BIN/
 
 # Generated files
 bin/
+build/
 gen/
 out/
 

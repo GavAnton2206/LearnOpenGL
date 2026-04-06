@@ -1,4 +1,4 @@
-#version 430 core
+#version __VERSION__
 
 struct Material {
     vec3 diffuse;

@@ -21,15 +21,15 @@
 #include <iostream>
 #include <string>
 
-using std::vector;
 using std::iostream;
 using std::string;
+using std::vector;
 
 // ------------------------------------------------
 // Engine-related
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
-GLFWwindow* window;
+GLFWwindow *window;
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -73,19 +73,19 @@ Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 // Lights
 DirectionLight dirLight(glm::vec3(-0.2f, -1.0f, -0.3f), glm::vec3(0.3f),
-	glm::vec3(0.4f, 0.4f, 0.4f), glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(238.0f/255.0f, 255.0f/255.0f, 89.0f / 255.0f), 0.3f);
-SpotLight spotLights[1]; // NR_POINT_LIGHTS in shaders
+						glm::vec3(0.4f, 0.4f, 0.4f), glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(238.0f / 255.0f, 255.0f / 255.0f, 89.0f / 255.0f), 0.3f);
+SpotLight spotLights[1];   // NR_POINT_LIGHTS in shaders
 PointLight pointLights[1]; // NR_SPOT_LIGHTS in shaders
 
 // Skybox
-Object3D* skybox;
+Object3D *skybox;
 
 // --------------------------------------------------------
 // Rigidbody Objects
 vector<Rigidbody> bouncingObjects;
-vector<Rigidbody*> physicsObjects;
+vector<Rigidbody *> physicsObjects;
 
-Rigidbody* ridingCube = nullptr;
+Rigidbody *ridingCube = nullptr;
 
 // --------------------------------------------------------
 // Cube Settings
@@ -96,25 +96,32 @@ float cubeSpeed = 15.0f;
 glm::vec3 lightPos;
 float lightOrbitRadius = 10.0f;
 
-int main() {
+int main()
+{
 	glfwInit();
-	
+
 	// -----------------------------------------------
 	// Setting Up GLFW
-	// OpenGL Core 4.3
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+#ifdef __APPLE__
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+#else
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+#endif
+
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// Forward Compatibility, for macOS
-	// glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); 
+#ifdef __APPLE__
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+#endif
 
 	// Borderless
-	//glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); // borderless window
-	
+	// glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); // borderless window
+
 	// Debugging
 	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
-	
+
 	// -----------------------------------------------
 	window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
 	if (window == NULL)
@@ -128,9 +135,9 @@ int main() {
 
 	// -----------------------------------------------
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback); // resizing
-	glfwSetCursorPosCallback(window, mouse_callback); // mouse movement
-	glfwSetMouseButtonCallback(window, mouse_button_callback); // mouse clicks
-	glfwSetScrollCallback(window, scroll_callback); // scrolling
+	glfwSetCursorPosCallback(window, mouse_callback);				   // mouse movement
+	glfwSetMouseButtonCallback(window, mouse_button_callback);		   // mouse clicks
+	glfwSetScrollCallback(window, scroll_callback);					   // scrolling
 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); // hidden cursor
 
@@ -145,39 +152,33 @@ int main() {
 	// Debugging
 	glDebugger.Setup();
 
-	Input::BindAction(GLFW_KEY_LEFT, InputEventType::PRESSED, []() {
-		ridingCube->SetPosition(ridingCube->GetPosition().x - cubeSpeed * deltaTime, ridingCube->GetPosition().y, ridingCube->GetPosition().z);
-		});
+	Input::BindAction(GLFW_KEY_LEFT, InputEventType::PRESSED, []()
+					  { ridingCube->SetPosition(ridingCube->GetPosition().x - cubeSpeed * deltaTime, ridingCube->GetPosition().y, ridingCube->GetPosition().z); });
 
-	Input::BindAction(GLFW_KEY_RIGHT, InputEventType::PRESSED, []() {
-		ridingCube->SetPosition(ridingCube->GetPosition().x + cubeSpeed * deltaTime, ridingCube->GetPosition().y, ridingCube->GetPosition().z);
-		});
+	Input::BindAction(GLFW_KEY_RIGHT, InputEventType::PRESSED, []()
+					  { ridingCube->SetPosition(ridingCube->GetPosition().x + cubeSpeed * deltaTime, ridingCube->GetPosition().y, ridingCube->GetPosition().z); });
 
-	Input::BindAction(GLFW_KEY_W, InputEventType::PRESSED, []() {
-		camera.ProcessKeyboard(CameraMovement::FORWARD, deltaTime);
-		});
+	Input::BindAction(GLFW_KEY_W, InputEventType::PRESSED, []()
+					  { camera.ProcessKeyboard(CameraMovement::FORWARD, deltaTime); });
 
-	Input::BindAction(GLFW_KEY_A, InputEventType::PRESSED, []() {
-		camera.ProcessKeyboard(CameraMovement::LEFT, deltaTime);
-		});
+	Input::BindAction(GLFW_KEY_A, InputEventType::PRESSED, []()
+					  { camera.ProcessKeyboard(CameraMovement::LEFT, deltaTime); });
 
-	Input::BindAction(GLFW_KEY_S, InputEventType::PRESSED, []() {
-		camera.ProcessKeyboard(CameraMovement::BACKWARD, deltaTime);
-		});
+	Input::BindAction(GLFW_KEY_S, InputEventType::PRESSED, []()
+					  { camera.ProcessKeyboard(CameraMovement::BACKWARD, deltaTime); });
 
-	Input::BindAction(GLFW_KEY_D, InputEventType::PRESSED, []() {
-		camera.ProcessKeyboard(CameraMovement::RIGHT, deltaTime);
-		});
+	Input::BindAction(GLFW_KEY_D, InputEventType::PRESSED, []()
+					  { camera.ProcessKeyboard(CameraMovement::RIGHT, deltaTime); });
 
-	Input::BindAction(GLFW_KEY_ESCAPE, InputEventType::JUST_PRESSED, []() {
+	Input::BindAction(GLFW_KEY_ESCAPE, InputEventType::JUST_PRESSED, []()
+					  {
 			if (!cursorHidden) {
 				glfwSetWindowShouldClose(window, true);
 			}
 			else {
 				cursorHidden = false;
 				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-			}
-		});
+			} });
 
 	// ---------------------------------
 	// light creation
@@ -189,10 +190,10 @@ int main() {
 	glm::vec3 diffuseLamp = white * glm::vec3(2.0f);
 
 	spotLights[0] = SpotLight(0, glm::cos(glm::radians(5.5f)), glm::cos(glm::radians(8.5f)),
-		ambient, diffuseFlashlight, glm::vec3(1.0f, 1.0f, 1.0f),
-		camera.Position, camera.Front, glm::vec3(1.0f), 0.75f);
+							  ambient, diffuseFlashlight, glm::vec3(1.0f, 1.0f, 1.0f),
+							  camera.Position, camera.Front, glm::vec3(1.0f), 0.75f);
 
-	pointLights[0] = PointLight(0, 1.0f, ambient, diffuseLamp, glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f), 1.0f, 0.0f, 0.0f, 
+	pointLights[0] = PointLight(0, 1.0f, ambient, diffuseLamp, glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f), 1.0f, 0.0f, 0.0f,
 								glm::vec3(1.0f), 1.0f, 1.0f);
 
 	// --------------------------------
@@ -208,15 +209,13 @@ int main() {
 	unsigned int boardsSpecularMap = loadTexture("assets/textures/boards/boards_specular.png");
 	unsigned int boardsEmissionMap = loadTexture("assets/textures/boards/boards_emission.jpg");
 
-	vector<string> faces
-	{
+	vector<string> faces{
 		"assets/textures/skybox/right.png",
 		"assets/textures/skybox/left.png",
 		"assets/textures/skybox/top.png",
 		"assets/textures/skybox/bottom.png",
 		"assets/textures/skybox/front.png",
-		"assets/textures/skybox/back.png"
-	};
+		"assets/textures/skybox/back.png"};
 	unsigned int skycubeTexture = loadCubemap(faces);
 
 	// ---------------------------------
@@ -273,14 +272,16 @@ int main() {
 	dirLight.Setup(pbrShader, true);
 	dirLight.Setup(normalShader, true);
 	dirLight.Setup(lightShader, true);
-	for (auto it = std::begin(spotLights); it != std::end(spotLights); ++it) {
+	for (auto it = std::begin(spotLights); it != std::end(spotLights); ++it)
+	{
 		it->Setup(litShader, true);
 		it->Setup(litTexShader, true);
 		it->Setup(pbrShader, true);
 		it->Setup(normalShader, true);
 		it->Setup(lightShader, true);
 	}
-	for (auto it = std::begin(pointLights); it != std::end(pointLights); ++it) {
+	for (auto it = std::begin(pointLights); it != std::end(pointLights); ++it)
+	{
 		it->Setup(litShader, true);
 		it->Setup(litTexShader, true);
 		it->Setup(pbrShader, true);
@@ -299,161 +300,161 @@ int main() {
 	// ----------------------------
 	// cubes
 	Object3D lightCube = Object3D(glm::vec3(0.0f, 0.0f, 0.0f),
-		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
-		glm::vec3(0.05f),
-		cubeVAO,
-		lightShader,
-		36,
-		false);
+								  glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+								  glm::vec3(0.05f),
+								  cubeVAO,
+								  lightShader,
+								  36,
+								  false);
 
 	Object3D floor = Object3D(glm::vec3(0.0f, -1.55f, 0.0f),
-		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
-		glm::vec3(1000.0f, 0.01f, 1000.00f),
-		cubeVAO,
-		litTexShader,
-		36,
-		false,
-		boardsDiffuseMap,
-		boardsSpecularMap,
-		boardsEmissionMap,
-		0,
-		glm::vec2(1000.0f));
+							  glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+							  glm::vec3(1000.0f, 0.01f, 1000.00f),
+							  cubeVAO,
+							  litTexShader,
+							  36,
+							  false,
+							  boardsDiffuseMap,
+							  boardsSpecularMap,
+							  boardsEmissionMap,
+							  0,
+							  glm::vec2(1000.0f));
 
 	skybox = new Object3D(glm::vec3(0.0f, 0.0f, 0.0f),
-		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
-		glm::vec3(1.0f, 1.0f, 1.0f),
-		cubeVAO,
-		skyboxShader,
-		36,
-		false,
-		skycubeTexture);
+						  glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+						  glm::vec3(1.0f, 1.0f, 1.0f),
+						  cubeVAO,
+						  skyboxShader,
+						  36,
+						  false,
+						  skycubeTexture);
 
 	float density = 1.0f;
 	glm::vec3 sphereColor = glm::vec3(1.0f, 1.0f, 0.0f);
 
 	bouncingObjects.push_back(Rigidbody(glm::vec3(-6.0f, 3.0f, 0.0f),
-		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
-		glm::vec3(0.545f),
-		sphereVAO,
-		litShader,
-		sphereVerticesNum,
-		true,
-		4.0 / 3.0 * glm::pi<float>() * pow(0.545f, 2) * density,
-		ObjectType::DYNAMIC, 0, 0, 0, 0, glm::vec2(0.0f), sphereColor));
+										glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+										glm::vec3(0.545f),
+										sphereVAO,
+										litShader,
+										sphereVerticesNum,
+										true,
+										4.0 / 3.0 * glm::pi<float>() * pow(0.545f, 2) * density,
+										ObjectType::DYNAMIC, 0, 0, 0, 0, glm::vec2(0.0f), sphereColor));
 
 	bouncingObjects.push_back(Rigidbody(glm::vec3(-6.0f, 7.0f, 0.0f),
-		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
-		glm::vec3(0.545f),
-		sphereVAO,
-		litShader,
-		sphereVerticesNum,
-		true,
-		4.0 / 3.0 * glm::pi<float>() * pow(0.545f, 2) * density,
-		ObjectType::DYNAMIC, 0, 0, 0, 0, glm::vec2(0.0f), sphereColor));
+										glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+										glm::vec3(0.545f),
+										sphereVAO,
+										litShader,
+										sphereVerticesNum,
+										true,
+										4.0 / 3.0 * glm::pi<float>() * pow(0.545f, 2) * density,
+										ObjectType::DYNAMIC, 0, 0, 0, 0, glm::vec2(0.0f), sphereColor));
 
 	bouncingObjects.push_back(Rigidbody(glm::vec3(-6.0f, 10.0f, 0.0f),
-		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
-		glm::vec3(0.545f),
-		sphereVAO,
-		litShader,
-		sphereVerticesNum,
-		true,
-		4.0 / 3.0 * glm::pi<float>() * pow(0.545f, 2) * density,
-		ObjectType::DYNAMIC, 0, 0, 0, 0, glm::vec2(0.0f), sphereColor));
+										glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+										glm::vec3(0.545f),
+										sphereVAO,
+										litShader,
+										sphereVerticesNum,
+										true,
+										4.0 / 3.0 * glm::pi<float>() * pow(0.545f, 2) * density,
+										ObjectType::DYNAMIC, 0, 0, 0, 0, glm::vec2(0.0f), sphereColor));
 
 	bouncingObjects.push_back(Rigidbody(glm::vec3(-6.0f, 1.0f, 0.0f),
-		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
-		glm::vec3(0.545f),
-		sphereVAO,
-		litShader,
-		sphereVerticesNum,
-		true,
-		4.0 / 3.0 * glm::pi<float>() * pow(0.545f, 2) * density,
-		ObjectType::DYNAMIC, 0, 0, 0, 0, glm::vec2(0.0f), sphereColor));
+										glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+										glm::vec3(0.545f),
+										sphereVAO,
+										litShader,
+										sphereVerticesNum,
+										true,
+										4.0 / 3.0 * glm::pi<float>() * pow(0.545f, 2) * density,
+										ObjectType::DYNAMIC, 0, 0, 0, 0, glm::vec2(0.0f), sphereColor));
 
 	bouncingObjects.push_back(Rigidbody(glm::vec3(-10.0f, 4.0f, 0.0f),
-		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
-		glm::vec3(0.545f),
-		sphereVAO,
-		litShader,
-		sphereVerticesNum,
-		true,
-		4.0 / 3.0 * glm::pi<float>() * pow(0.545f, 2) * density,
-		ObjectType::DYNAMIC, 0, 0, 0, 0, glm::vec2(0.0f), sphereColor));
+										glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+										glm::vec3(0.545f),
+										sphereVAO,
+										litShader,
+										sphereVerticesNum,
+										true,
+										4.0 / 3.0 * glm::pi<float>() * pow(0.545f, 2) * density,
+										ObjectType::DYNAMIC, 0, 0, 0, 0, glm::vec2(0.0f), sphereColor));
 
 	bouncingObjects.push_back(Rigidbody(glm::vec3(6.0f, 4.0f, 0.0f),
-		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
-		glm::vec3(1.0f, 1.0f, 1.0f),
-		cubeVAO,
-		litTexShader,
-		36,
-		false,
-		1.0f * density,
-		ObjectType::DYNAMIC,
-		boxDiffuseMap,
-		boxSpecularMap,
-		boxEmissionMap));
+										glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+										glm::vec3(1.0f, 1.0f, 1.0f),
+										cubeVAO,
+										litTexShader,
+										36,
+										false,
+										1.0f * density,
+										ObjectType::DYNAMIC,
+										boxDiffuseMap,
+										boxSpecularMap,
+										boxEmissionMap));
 
 	bouncingObjects.push_back(Rigidbody(glm::vec3(10.0f, 6.0f, 0.0f),
-		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
-		glm::vec3(1.0f, 1.0f, 1.0f),
-		cubeVAO,
-		litTexShader,
-		36,
-		false,
-		1.0f * density,
-		ObjectType::DYNAMIC,
-		boxDiffuseMap,
-		boxSpecularMap,
-		boxEmissionMap));
+										glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+										glm::vec3(1.0f, 1.0f, 1.0f),
+										cubeVAO,
+										litTexShader,
+										36,
+										false,
+										1.0f * density,
+										ObjectType::DYNAMIC,
+										boxDiffuseMap,
+										boxSpecularMap,
+										boxEmissionMap));
 
 	Rigidbody fallingCube = Rigidbody(glm::vec3(2.0f, 2.0f, 0.0f),
-		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
-		glm::vec3(1.0f, 1.0f, 1.0f),
-		cubeVAO,
-		litTexShader,
-		36,
-		false,
-		1.0f * density,
-		ObjectType::DYNAMIC,
-		boxDiffuseMap,
-		boxSpecularMap,
-		boxEmissionMap);
+									  glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+									  glm::vec3(1.0f, 1.0f, 1.0f),
+									  cubeVAO,
+									  litTexShader,
+									  36,
+									  false,
+									  1.0f * density,
+									  ObjectType::DYNAMIC,
+									  boxDiffuseMap,
+									  boxSpecularMap,
+									  boxEmissionMap);
 
 	Object3D brickwall = Object3D(glm::vec3(0.0f, 0.0f, 0.0f),
-		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
-		glm::vec3(1.0f, 1.0f, 1.0f),
-		cubeVAO,
-		normalShader,
-		36,
-		false,
-		brickwallDiffuseMap,
-		0,
-		0,
-		brickwallNormalMap);
+								  glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+								  glm::vec3(1.0f, 1.0f, 1.0f),
+								  cubeVAO,
+								  normalShader,
+								  36,
+								  false,
+								  brickwallDiffuseMap,
+								  0,
+								  0,
+								  brickwallNormalMap);
 
 	ridingCube = new Rigidbody(glm::vec3(0.0f, -1.0f, 0.0f),
-		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
-		glm::vec3(1.0f, 1.0f, 1.0f),
-		cubeVAO,
-		pbrShader,
-		36,
-		false,
-		1.0f * density,
-		ObjectType::KINEMATIC,
-		boxDiffuseMap,
-		boxSpecularMap,
-		boxEmissionMap);
+							   glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+							   glm::vec3(1.0f, 1.0f, 1.0f),
+							   cubeVAO,
+							   pbrShader,
+							   36,
+							   false,
+							   1.0f * density,
+							   ObjectType::KINEMATIC,
+							   boxDiffuseMap,
+							   boxSpecularMap,
+							   boxEmissionMap);
 
 	Rigidbody fallingSphere = Rigidbody(glm::vec3(-2.0f, 2.0f, 0.0f),
-		glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
-		glm::vec3(0.545f),
-		sphereVAO,
-		litShader,
-		sphereVerticesNum,
-		true,
-		4.0 / 3.0 * glm::pi<float>() * pow(0.545f, 2) * density,
-		ObjectType::DYNAMIC, 0, 0, 0, 0, glm::vec2(0.0f), sphereColor);
+										glm::vec3(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)),
+										glm::vec3(0.545f),
+										sphereVAO,
+										litShader,
+										sphereVerticesNum,
+										true,
+										4.0 / 3.0 * glm::pi<float>() * pow(0.545f, 2) * density,
+										ObjectType::DYNAMIC, 0, 0, 0, 0, glm::vec2(0.0f), sphereColor);
 
 	// Physics Objects
 	for (unsigned int i = 0; i < bouncingObjects.size(); i++)
@@ -467,24 +468,29 @@ int main() {
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
-	
+
 	glEnable(GL_STENCIL_TEST);
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	
+
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
 	glDisable(GL_CULL_FACE);
 
 	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	
+	ImGuiIO &io = ImGui::GetIO();
+	(void)io;
+
 	ImGui::StyleColorsDark();
 
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
-	ImGui_ImplOpenGL3_Init("#version 130");
+#ifdef __APPLE__
+	ImGui_ImplOpenGL3_Init("#version 410");
+#else
+	ImGui_ImplOpenGL3_Init("#version 430");
+#endif
 
 	// --------------------------------------------------------------------------
 	while (!glfwWindowShouldClose(window))
@@ -500,14 +506,12 @@ int main() {
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
-
 		// background color
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		
+
 		glEnable(GL_DEPTH_TEST);
 		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
 
 		// matrices
 		glm::mat4 model;
@@ -564,11 +568,13 @@ int main() {
 		shaders.push_back(lightShader);
 
 		int j = 0;
-		for (auto it = std::begin(spotLights); it != std::end(spotLights); ++it, j++) {	
+		for (auto it = std::begin(spotLights); it != std::end(spotLights); ++it, j++)
+		{
 			it->Update(shaders, true, j);
 		}
 		j = 0;
-		for (auto it = std::begin(pointLights); it != std::end(pointLights); ++it, j++) {
+		for (auto it = std::begin(pointLights); it != std::end(pointLights); ++it, j++)
+		{
 			it->Update(litShader, true, j);
 			it->Update(litTexShader, true, j);
 			it->Update(pbrShader, true, j);
@@ -576,7 +582,7 @@ int main() {
 			it->Update(lightShader, true, j);
 		}
 
-		// skybox 
+		// skybox
 		glDepthMask(GL_FALSE);
 		glDisable(GL_STENCIL_TEST);
 		glDisable(GL_BLEND);
@@ -604,13 +610,16 @@ int main() {
 		brickwall.Draw();
 
 		// Bouncing Objects
-	
-		for (unsigned int i = 0; i < bouncingObjects.size(); i++) {
-			if (bouncingObjects[i].GetPosition().y <= -1.0f) {
+
+		for (unsigned int i = 0; i < bouncingObjects.size(); i++)
+		{
+			if (bouncingObjects[i].GetPosition().y <= -1.0f)
+			{
 				if (bouncingObjects[i].GetPosition().y < 0)
 					bouncingObjects[i].velocity.y *= -0.9f;
 
-				if (bouncingObjects[i].velocity.y < 0.001f) {
+				if (bouncingObjects[i].velocity.y < 0.001f)
+				{
 					bouncingObjects[i].velocity.y = 0.0f;
 					bouncingObjects[i].SetRotation(bouncingObjects[i].GetRotation().x, bouncingObjects[i].GetRotation().y, 0.0f);
 				}
@@ -618,12 +627,14 @@ int main() {
 		}
 
 		// Resetting Cube and Sphere
-		if (fallingCube.GetPosition().y <= -3.0f) {
+		if (fallingCube.GetPosition().y <= -3.0f)
+		{
 			fallingCube.SetPosition(fallingCube.GetPosition().x, 10.0f + random(5.0f), fallingCube.GetPosition().z);
 			fallingCube.velocity = glm::vec3(0.0f);
 		}
 
-		if (fallingSphere.GetPosition().y <= -3.0f) {
+		if (fallingSphere.GetPosition().y <= -3.0f)
+		{
 			fallingSphere.SetPosition(fallingSphere.GetPosition().x, 10.0f + random(5.0f), fallingSphere.GetPosition().z);
 			fallingSphere.velocity = glm::vec3(0.0f);
 		}
@@ -632,15 +643,17 @@ int main() {
 
 		for (unsigned int i = 0; i < physicsObjects.size(); i++)
 		{
-			if (!pause) {
+			if (!pause)
+			{
 				if (physicsObjects[i]->behavior == ObjectType::DYNAMIC)
 					physicsObjects[i]->ApplyForce(glm::vec3(0.0f, -0.0098f, 0.0f));
-				
+
 				for (unsigned int j = i + 1; j < physicsObjects.size(); j++)
 				{
 					CollisionInfo info = checkCollisions(*physicsObjects[i], *physicsObjects[j]);
 
-					if (info.collided) {
+					if (info.collided)
+					{
 						resolveCollision(*physicsObjects[i], *physicsObjects[j], info);
 					}
 				}
@@ -648,10 +661,12 @@ int main() {
 				physicsObjects[i]->PhysicsProcess(deltaTime);
 			}
 
-			if (showOutline && physicsObjects[i] == ridingCube) {
+			if (showOutline && physicsObjects[i] == ridingCube)
+			{
 				DrawWithOutline(*ridingCube, colorShader, glm::vec3(0.5294117647f, 0.1019607843f, 0.7411764706f));
 			}
-			else {
+			else
+			{
 				physicsObjects[i]->Draw();
 			}
 		}
@@ -663,12 +678,13 @@ int main() {
 			ImGui::Begin("Settings");
 
 			ImGui::Checkbox("Show Outline", &showOutline);
-			if (ImGui::Checkbox("Lamp On", &lampOn)) {
+			if (ImGui::Checkbox("Lamp On", &lampOn))
+			{
 				spotLights[0].shown = lampOn;
 			}
 
 			static int currentDepth = 0;
-			const char* depthVar[] = { "GL_LEQUAL", "GL_NOTEQUAL" };
+			const char *depthVar[] = {"GL_LEQUAL", "GL_NOTEQUAL"};
 
 			if (ImGui::BeginCombo("Depth Func", depthVar[currentDepth]))
 			{
@@ -708,7 +724,7 @@ int main() {
 				camera.SetPosition(glm::vec3(cameraPosition.x, cameraPosition.y, cameraPosition.z));
 			}
 
-			if(ImGui::SliderFloat("Camera Zoom", &cameraZoom, 1.0f, 45.0f, "%.3f"))
+			if (ImGui::SliderFloat("Camera Zoom", &cameraZoom, 1.0f, 45.0f, "%.3f"))
 			{
 				camera.SetZoom(cameraZoom);
 			}
@@ -749,16 +765,18 @@ int main() {
 	return 0;
 }
 
-void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
 {
-	if ((button == GLFW_MOUSE_BUTTON_RIGHT || button == GLFW_MOUSE_BUTTON_LEFT) && action == GLFW_PRESS) {
+	if ((button == GLFW_MOUSE_BUTTON_RIGHT || button == GLFW_MOUSE_BUTTON_LEFT) && action == GLFW_PRESS)
+	{
 		firstMouse = true;
 		cursorHidden = true;
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	}
 }
 
-void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+void mouse_callback(GLFWwindow *window, double xpos, double ypos)
+{
 	float xposF = static_cast<float>(xpos);
 	float yposF = static_cast<float>(ypos);
 
@@ -781,23 +799,23 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 	camera.ProcessMouseMovement(xoffset, yoffset);
 }
 
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
 {
 	camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
 	glViewport(0, 0, width, height);
 }
 
-unsigned int loadTexture(char const* path)
+unsigned int loadTexture(char const *path)
 {
 	unsigned int textureID;
 	glGenTextures(1, &textureID);
 
 	int width, height, nrComponents;
-	unsigned char* data = stbi_load(path, &width, &height, &nrComponents, 0);
+	unsigned char *data = stbi_load(path, &width, &height, &nrComponents, 0);
 	if (data)
 	{
 		GLenum format;
@@ -835,9 +853,11 @@ unsigned int loadCubemap(vector<string> faces)
 	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
 
 	int width, height, nrChannels;
-	for (int i = 0; i < faces.size(); i++) {
-		unsigned char* data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
-		if (data) {
+	for (int i = 0; i < faces.size(); i++)
+	{
+		unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+		if (data)
+		{
 			GLenum format;
 			if (nrChannels == 1)
 				format = GL_RED;
@@ -865,51 +885,51 @@ unsigned int loadCubemap(vector<string> faces)
 	return textureID;
 }
 
-void cubeMeshSetup(unsigned int& cubeVBO, unsigned int& cubeVAO) {
+void cubeMeshSetup(unsigned int &cubeVBO, unsigned int &cubeVAO)
+{
 	float vertices[] = {
 		// positions          // normals           // texture	// tangent			// bitangent
-		-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,	1.0f, 0.0f, 0.0f,	0.0f, 1.0f, 0.0f,
-		 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 1.0f,	1.0f, 0.0f, 0.0f,	0.0f, 1.0f, 0.0f,
-		 0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,  1.0f, 0.0f, 0.0f,	0.0f, 1.0f, 0.0f,
-		 0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,	1.0f, 0.0f, 0.0f,	0.0f, 1.0f, 0.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,	1.0f, 0.0f, 0.0f,	0.0f, 1.0f, 0.0f,
-		-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 1.0f,	1.0f, 0.0f, 0.0f,	0.0f, 1.0f, 0.0f,
+		-0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+		0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+		0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+		0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+		-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+		-0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
 
-		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,	1.0f, 0.0f, 0.0f,	0.0f, 1.0f, 0.0f,
-		 0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 0.0f,	1.0f, 0.0f, 0.0f,	0.0f, 1.0f, 0.0f,
-		 0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,	1.0f, 0.0f, 0.0f,	0.0f, 1.0f, 0.0f,
-		 0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,	1.0f, 0.0f, 0.0f,	0.0f, 1.0f, 0.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 1.0f,	1.0f, 0.0f, 0.0f,	0.0f, 1.0f, 0.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,	1.0f, 0.0f, 0.0f,	0.0f, 1.0f, 0.0f,
+		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+		0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+		0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+		0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+		-0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
 
-		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,	0.0f, 0.0f, 1.0f,	0.0f, 1.0f, 0.0f,
-		-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f,	0.0f, 0.0f, 1.0f,	0.0f, 1.0f, 0.0f,
-		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,	0.0f, 0.0f, 1.0f,	0.0f, 1.0f, 0.0f,
-		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,	0.0f, 0.0f, 1.0f,	0.0f, 1.0f, 0.0f,
-		-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 0.0f,	0.0f, 0.0f, 1.0f,	0.0f, 1.0f, 0.0f,
-		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,	0.0f, 0.0f, 1.0f,	0.0f, 1.0f, 0.0f,
+		-0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+		-0.5f, 0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+		-0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+		-0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+		-0.5f, -0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+		-0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
 
-		 0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,	0.0f, 0.0f, 1.0f,	0.0f, 1.0f, 0.0f,
-		 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f,	0.0f, 0.0f, 1.0f,	0.0f, 1.0f, 0.0f,
-		 0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,	0.0f, 0.0f, 1.0f,	0.0f, 1.0f, 0.0f,
-		 0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,	0.0f, 0.0f, 1.0f,	0.0f, 1.0f, 0.0f,
-		 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 0.0f,	0.0f, 0.0f, 1.0f,	0.0f, 1.0f, 0.0f,
-		 0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,	0.0f, 0.0f, 1.0f,	0.0f, 1.0f, 0.0f,
+		0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+		0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+		0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+		0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+		0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+		0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
 
-		-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,	1.0f, 0.0f, 0.0f,	0.0f, 0.0f, -1.0f,
-		 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f,	1.0f, 0.0f, 0.0f,	0.0f, 0.0f, -1.0f,
-		 0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,	1.0f, 0.0f, 0.0f,	0.0f, 0.0f, -1.0f,
-		 0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,	1.0f, 0.0f, 0.0f,	0.0f, 0.0f, -1.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f,	1.0f, 0.0f, 0.0f,	0.0f, 0.0f, -1.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,	1.0f, 0.0f, 0.0f,	0.0f, 0.0f, -1.0f,
+		-0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f,
+		0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f,
+		0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f,
+		0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f,
+		-0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f,
+		-0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f,
 
-		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f,	1.0f, 0.0f, 0.0f,	0.0f, 0.0f, 1.0f,
-		 0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f,	1.0f, 0.0f, 0.0f,	0.0f, 0.0f, 1.0f,
-		 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,	1.0f, 0.0f, 0.0f,	0.0f, 0.0f, 1.0f,
-		 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,	1.0f, 0.0f, 0.0f,	0.0f, 0.0f, 1.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,	1.0f, 0.0f, 0.0f,	0.0f, 0.0f, 1.0f,
-		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f,	1.0f, 0.0f, 0.0f,	0.0f, 0.0f, 1.0f
-	};
+		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+		0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+		0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+		0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+		-0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f};
 
 	glGenVertexArrays(1, &cubeVAO);
 	glGenBuffers(1, &cubeVBO);
@@ -919,27 +939,30 @@ void cubeMeshSetup(unsigned int& cubeVBO, unsigned int& cubeVAO) {
 
 	glBindVertexArray(cubeVAO);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void *)0);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void *)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)(6 * sizeof(float)));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void *)(6 * sizeof(float)));
 	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)(8 * sizeof(float)));
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void *)(8 * sizeof(float)));
 	glEnableVertexAttribArray(3);
-	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)(11 * sizeof(float)));
+	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void *)(11 * sizeof(float)));
 	glEnableVertexAttribArray(4);
 }
 
-unsigned int sphereMeshSetup(unsigned int& sphereVBO, unsigned int& sphereVAO, unsigned int& sphereEBO, int stacks, int sectors) {
+unsigned int sphereMeshSetup(unsigned int &sphereVBO, unsigned int &sphereVAO, unsigned int &sphereEBO, int stacks, int sectors)
+{
 	vector<float> vertices;
 
-	for (int i = 0; i <= stacks; ++i) {
+	for (int i = 0; i <= stacks; ++i)
+	{
 		float stackAngle = glm::pi<float>() / 2.0f - i * (glm::pi<float>() / stacks); // from pi/2 to -pi/2
-		float xy = cosf(stackAngle);                     // r * cos(u)
-		float z = sinf(stackAngle);                      // r * sin(u)
+		float xy = cosf(stackAngle);												  // r * cos(u)
+		float z = sinf(stackAngle);													  // r * sin(u)
 
-		for (int j = 0; j <= sectors; ++j) {
+		for (int j = 0; j <= sectors; ++j)
+		{
 			float sectorAngle = j * (2 * glm::pi<float>() / sectors); // from 0 to 2pi
 
 			float x = xy * cosf(sectorAngle);
@@ -968,19 +991,23 @@ unsigned int sphereMeshSetup(unsigned int& sphereVBO, unsigned int& sphereVAO, u
 	}
 
 	vector<unsigned int> indices;
-	for (int i = 0; i < stacks; ++i) {
-		int k1 = i * (sectors + 1);     // beginning of current stack
-		int k2 = k1 + sectors + 1;      // beginning of next stack
+	for (int i = 0; i < stacks; ++i)
+	{
+		int k1 = i * (sectors + 1); // beginning of current stack
+		int k2 = k1 + sectors + 1;	// beginning of next stack
 
-		for (int j = 0; j < sectors; ++j, ++k1, ++k2) {
-			if (i != 0) {
+		for (int j = 0; j < sectors; ++j, ++k1, ++k2)
+		{
+			if (i != 0)
+			{
 				// upper triangle
 				indices.push_back(k1);
 				indices.push_back(k2);
 				indices.push_back(k1 + 1);
 			}
 
-			if (i != (stacks - 1)) {
+			if (i != (stacks - 1))
+			{
 				// lower triangle
 				indices.push_back(k1 + 1);
 				indices.push_back(k2);
@@ -1004,13 +1031,13 @@ unsigned int sphereMeshSetup(unsigned int& sphereVBO, unsigned int& sphereVAO, u
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
 
 	// Vertex attributes: position (0), normal (1), texCoord (2)
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
 	glEnableVertexAttribArray(0);
 
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
 	glEnableVertexAttribArray(2);
 
 	glBindVertexArray(0);
@@ -1018,13 +1045,15 @@ unsigned int sphereMeshSetup(unsigned int& sphereVBO, unsigned int& sphereVAO, u
 	return static_cast<unsigned int>(indices.size());
 }
 
-CollisionInfo checkCollision(const SphereShape& obj1, const SphereShape& obj2) {
+CollisionInfo checkCollision(const SphereShape &obj1, const SphereShape &obj2)
+{
 	CollisionInfo info;
 
 	glm::vec3 posDiff = obj1.position - obj2.position;
 	float dist = glm::length(obj1.position - obj2.position);
 	float r = obj1.radius + obj2.radius;
-	if (dist < r) {
+	if (dist < r)
+	{
 		info.collided = true;
 		info.penetration = r - dist;
 		info.normal = (dist > 0.0f) ? posDiff / dist : glm::vec3(1, 0, 0);
@@ -1033,14 +1062,16 @@ CollisionInfo checkCollision(const SphereShape& obj1, const SphereShape& obj2) {
 	return info;
 }
 
-CollisionInfo checkCollision(const SphereShape& obj1, const AABBShape& obj2) {
+CollisionInfo checkCollision(const SphereShape &obj1, const AABBShape &obj2)
+{
 	CollisionInfo info;
 
 	glm::vec3 closestPoint = glm::clamp(obj1.position, obj2.min(), obj2.max());
 	glm::vec3 posDiff = obj1.position - closestPoint;
 	float dist = glm::length(posDiff);
 
-	if (dist < obj1.radius) {
+	if (dist < obj1.radius)
+	{
 		info.collided = true;
 		info.penetration = obj1.radius - dist;
 		info.normal = (dist > 0.0f) ? posDiff / dist : glm::vec3(1, 0, 0);
@@ -1049,11 +1080,13 @@ CollisionInfo checkCollision(const SphereShape& obj1, const AABBShape& obj2) {
 	return info;
 }
 
-CollisionInfo checkCollision(const AABBShape& obj1, const SphereShape& obj2) {
+CollisionInfo checkCollision(const AABBShape &obj1, const SphereShape &obj2)
+{
 	return checkCollision(obj2, obj1);
 }
 
-CollisionInfo checkCollision(const AABBShape& obj1, const AABBShape& obj2) {
+CollisionInfo checkCollision(const AABBShape &obj1, const AABBShape &obj2)
+{
 	CollisionInfo info;
 
 	glm::vec3 minA = obj1.min();
@@ -1067,20 +1100,22 @@ CollisionInfo checkCollision(const AABBShape& obj1, const AABBShape& obj2) {
 	{
 		info.collided = true;
 
-
 		float overlapX = std::min(maxA.x, maxB.x) - std::max(minA.x, minB.x);
 		float overlapY = std::min(maxA.y, maxB.y) - std::max(minA.y, minB.y);
 		float overlapZ = std::min(maxA.z, maxB.z) - std::max(minA.z, minB.z);
 
-		if (overlapX < overlapY && overlapX < overlapZ) {
+		if (overlapX < overlapY && overlapX < overlapZ)
+		{
 			info.penetration = overlapX;
 			info.normal = (obj1.position.x < obj2.position.x) ? glm::vec3(-1, 0, 0) : glm::vec3(1, 0, 0);
 		}
-		else if (overlapY < overlapZ) {
+		else if (overlapY < overlapZ)
+		{
 			info.penetration = overlapY;
 			info.normal = (obj1.position.y < obj2.position.y) ? glm::vec3(0, -1, 0) : glm::vec3(0, 1, 0);
 		}
-		else {
+		else
+		{
 			info.penetration = overlapZ;
 			info.normal = (obj1.position.z < obj2.position.z) ? glm::vec3(0, 0, -1) : glm::vec3(0, 0, 1);
 		}
@@ -1089,17 +1124,21 @@ CollisionInfo checkCollision(const AABBShape& obj1, const AABBShape& obj2) {
 	return info;
 }
 
-CollisionInfo checkCollisions(const Rigidbody& obj1, const Rigidbody& obj2) {
+CollisionInfo checkCollisions(const Rigidbody &obj1, const Rigidbody &obj2)
+{
 	CollisionInfo info;
 
 	if (!obj1.canCollide || !obj2.canCollide)
 		return info;
 
-	return std::visit([](auto&& s1, auto&& s2) { return checkCollision(s1, s2); }, obj1.shape, obj2.shape);
+	return std::visit([](auto &&s1, auto &&s2)
+					  { return checkCollision(s1, s2); }, obj1.shape, obj2.shape);
 }
 
-void resolveCollision(Rigidbody& A, Rigidbody& B, const CollisionInfo& info) {
-	if (!info.collided) return;
+void resolveCollision(Rigidbody &A, Rigidbody &B, const CollisionInfo &info)
+{
+	if (!info.collided)
+		return;
 
 	resolveSpecialCollision(A, B, info);
 
@@ -1117,7 +1156,8 @@ void resolveCollision(Rigidbody& A, Rigidbody& B, const CollisionInfo& info) {
 
 	float velAlongNormal = glm::dot(relativeVelocity, normal);
 
-	if (velAlongNormal > 0.0f) return;
+	if (velAlongNormal > 0.0f)
+		return;
 
 	float restitution = 1.0f;
 
@@ -1146,22 +1186,25 @@ void resolveCollision(Rigidbody& A, Rigidbody& B, const CollisionInfo& info) {
 		B.SetPosition(B.GetPosition() + invMassB * correction);
 }
 
-void resolveSpecialCollision(Rigidbody& A, Rigidbody& B, const CollisionInfo& info) {
-	if (A == *ridingCube) {
-		//B.drawn = false;
-		//B.canCollide = false;
+void resolveSpecialCollision(Rigidbody &A, Rigidbody &B, const CollisionInfo &info)
+{
+	if (A == *ridingCube)
+	{
+		// B.drawn = false;
+		// B.canCollide = false;
 	}
 
-	if (B == *ridingCube) {
-		//A.drawn = false;
-		//A.canCollide = false;
+	if (B == *ridingCube)
+	{
+		// A.drawn = false;
+		// A.canCollide = false;
 	}
 }
 
-void DrawWithOutline(Object3D obj, Shader& shader_, glm::vec3 color)
+void DrawWithOutline(Object3D obj, Shader &shader_, glm::vec3 color)
 {
 	Object3D outline = Object3D(obj.position, obj.rotation, obj.scale * 1.05f, obj.VAO, shader_,
-		obj.indexCount, obj.drawElements, 0, 0, 0, 0, glm::vec2(0.0f), glm::vec3(0.0f));
+								obj.indexCount, obj.drawElements, 0, 0, 0, 0, glm::vec2(0.0f), glm::vec3(0.0f));
 
 	glStencilFunc(GL_ALWAYS, 1, 0xFF);
 	glStencilMask(0xFF);
