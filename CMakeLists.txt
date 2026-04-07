@@ -77,3 +77,9 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
     $<$<PLATFORM_ID:Darwin>:GL_SILENCE_DEPRECATION>
     IMGUI_IMPL_OPENGL_LOADER_CUSTOM
 )
+
+if (WIN32)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    )
+endif()
