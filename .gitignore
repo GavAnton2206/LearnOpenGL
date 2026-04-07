@@ -3,6 +3,8 @@
 imgui.ini
 
 .vscode/launch.json
+vcpkg_installed/
+vcpkg-configuration.json
 
 ##### Windows
 *.sln

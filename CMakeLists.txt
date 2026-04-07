@@ -4,7 +4,7 @@ project(LearnOpenGL)
 set(CMAKE_CXX_STANDARD 17)
 
 if (WIN32)
-    set(CMAKE_PREFIX_PATH "C:/Libs/")
+    list(APPEND CMAKE_PREFIX_PATH "${sourceDir}/build/vcpkg_installed/x64-windows/")
 endif()
 
 # Find packages
@@ -13,8 +13,8 @@ if(WIN32)
 endif()
 
 find_package(OpenGL REQUIRED)
-find_package(glfw3 REQUIRED)
-find_package(glm REQUIRED)
+find_package(glfw3 CONFIG REQUIRED)
+find_package(glm CONFIG REQUIRED)
 
 # Collect sources
 set(PLATFORM_SOURCES)
