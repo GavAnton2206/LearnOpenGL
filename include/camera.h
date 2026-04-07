@@ -4,7 +4,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-enum CameraMovement {
+enum CameraMovement
+{
     FORWARD,
     BACKWARD,
     LEFT,

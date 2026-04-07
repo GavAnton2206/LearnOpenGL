@@ -1,54 +1,79 @@
 cmake_minimum_required(VERSION 3.16)
-project(MyOpenGLProject)
+project(LearnOpenGL)
 
 set(CMAKE_CXX_STANDARD 17)
 
+if (WIN32)
+    set(CMAKE_PREFIX_PATH "C:/Libs/")
+endif()
+
 # Find packages
+if(WIN32)
+    set(OpenGL_GL_PREFERENCE GLVND)
+endif()
+
 find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(glm REQUIRED)
 
 # Collect sources
-file(GLOB_RECURSE IMGUI_SOURCES "${CMAKE_SOURCE_DIR}/vendor/src/imgui/*.cpp")
+set(PLATFORM_SOURCES)
+
+if (WIN32)
+    list(APPEND PLATFORM_SOURCES vendor/glad/windows/src/glad.c)
+elseif(APPLE)
+    list(APPEND PLATFORM_SOURCES vendor/glad/macos/src/glad.c)
+endif()
+
+file(GLOB_RECURSE SOURCES_ "${CMAKE_SOURCE_DIR}/src/*.cpp")
+file(GLOB_RECURSE IMGUI_SOURCES "${CMAKE_SOURCE_DIR}/vendor/imgui/src/*.cpp")
 
 add_executable(${PROJECT_NAME}
-    src/main.cpp
-    src/camera.cpp
-    src/gldebugger.cpp
-    src/input.cpp
-    src/light.cpp
-    src/objects.cpp
-    src/shader.cpp
-    src/utils.cpp
+    vendor/stb_image/src/stb_image.cpp
 
-    vendor/glad/glad.c
-    vendor/stb_image/stb_image.cpp
-
+    ${SOURCES_}
     ${IMGUI_SOURCES}
+    ${PLATFORM_SOURCES}
 )
+
+# Collect includes
+set(PLATFORM_INCLUDES)
+
+if (WIN32)
+    list(APPEND PLATFORM_INCLUDES ${CMAKE_SOURCE_DIR}/vendor/glad/windows/include/)
+elseif(APPLE)
+    list(APPEND PLATFORM_INCLUDES ${CMAKE_SOURCE_DIR}/vendor/glad/macos/include/)
+    list(APPEND PLATFORM_INCLUDES /opt/homebrew/include)
+endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/include
-    ${CMAKE_SOURCE_DIR}/vendor/
-    ${CMAKE_SOURCE_DIR}/vendor/GLFW
-    ${CMAKE_SOURCE_DIR}/vendor/imgui
-    ${CMAKE_SOURCE_DIR}/vendor/KHR
-    ${CMAKE_SOURCE_DIR}/vendor/src
-    ${CMAKE_SOURCE_DIR}/vendor/stb_image
-    /opt/homebrew/include
+    ${CMAKE_SOURCE_DIR}/vendor/KHR/include/
+    ${CMAKE_SOURCE_DIR}/vendor/imgui/include
+    ${CMAKE_SOURCE_DIR}/vendor/imgui/include/imgui
+    ${CMAKE_SOURCE_DIR}/vendor/stb_image/include
+
+    ${PLATFORM_INCLUDES}
 )
+
+# Link libraries
+set(PLATFORM_LINK_LIBRARIES)
+
+if(APPLE)
+    list(APPEND PLATFORM_LINK_LIBRARIES "-framework Cocoa")
+    list(APPEND PLATFORM_LINK_LIBRARIES "-framework IOKit")
+    list(APPEND PLATFORM_LINK_LIBRARIES "-framework CoreVideo")
+endif()
 
 target_link_libraries(${PROJECT_NAME}
     OpenGL::GL
     glfw
     glm::glm
-    "-framework Cocoa"
-    "-framework IOKit"
-    "-framework CoreVideo"
+    ${PLATFORM_LINK_LIBRARIES}
 )
 
-# macOS: silence OpenGL deprecation warnings
+# Compile definitions
 target_compile_definitions(${PROJECT_NAME} PRIVATE
-    GL_SILENCE_DEPRECATION
-    IMGUI_IMPL_OPENGL_LOADER_GLAD
+    $<$<PLATFORM_ID:Darwin>:GL_SILENCE_DEPRECATION>
+    IMGUI_IMPL_OPENGL_LOADER_CUSTOM
 )
