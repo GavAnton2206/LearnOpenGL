@@ -1,6 +1,8 @@
 {
     "cmake.buildDirectory": "${workspaceFolder}/build",
-    "cmake.generator": "Unix Makefiles",
     "editor.formatOnSave": true,
-    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "editor.minimap.enabled": false,
+    "C_Cpp.debugShortcut": false,
+    "glsl-linter.validate": false
 }

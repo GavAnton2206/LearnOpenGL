@@ -67,13 +67,18 @@ Shader colorShader;
 Shader skyboxShader;
 Shader normalShader;
 
+glm::vec3 cubeColor = glm::vec3(1.0f, 1.0f, 1.0f);
+float cubeMetallic = 0.0f;
+float cubeRoughness = 1.0f;
+float cubeAO;
+
 // --------------------------------------------------------
 // Camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 // Lights
 DirectionLight dirLight(glm::vec3(-0.2f, -1.0f, -0.3f), glm::vec3(0.3f),
-						glm::vec3(0.4f, 0.4f, 0.4f), glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(238.0f / 255.0f, 255.0f / 255.0f, 89.0f / 255.0f), 0.3f);
+						glm::vec3(0.4f, 0.4f, 0.4f), glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(238.0f / 255.0f, 255.0f / 255.0f, 89.0f / 255.0f), 3.0f);
 SpotLight spotLights[1];   // NR_POINT_LIGHTS in shaders
 PointLight pointLights[1]; // NR_SPOT_LIGHTS in shaders
 
@@ -152,6 +157,7 @@ int main()
 	// Debugging
 	glDebugger.Setup();
 
+	Input::Setup();
 	Input::BindAction(GLFW_KEY_LEFT, InputEventType::PRESSED, []()
 					  { ridingCube->SetPosition(ridingCube->GetPosition().x - cubeSpeed * deltaTime, ridingCube->GetPosition().y, ridingCube->GetPosition().z); });
 
@@ -191,10 +197,10 @@ int main()
 
 	spotLights[0] = SpotLight(0, glm::cos(glm::radians(5.5f)), glm::cos(glm::radians(8.5f)),
 							  ambient, diffuseFlashlight, glm::vec3(1.0f, 1.0f, 1.0f),
-							  camera.Position, camera.Front, glm::vec3(1.0f), 0.75f);
+							  camera.Position, camera.Front, glm::vec3(1.0f), 40.0f);
 
 	pointLights[0] = PointLight(0, 1.0f, ambient, diffuseLamp, glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f), 1.0f, 0.0f, 0.0f,
-								glm::vec3(1.0f), 1.0f, 1.0f);
+								glm::vec3(1.0f), 50.0f, 1.0f);
 
 	// --------------------------------
 	// texture
@@ -244,10 +250,10 @@ int main()
 	// another shader settings
 	pbrShader.use();
 
-	pbrShader.setInt("material.diffuse", 0);
-	pbrShader.setInt("material.specular", 1);
-	pbrShader.setInt("material.emission", 2);
-	pbrShader.setFloat("material.shininess", 32.0f);
+	pbrShader.setVec3("material.albedo", cubeColor);
+	pbrShader.setFloat("material.metallic", cubeMetallic);
+	pbrShader.setFloat("material.roughness", cubeRoughness);
+	pbrShader.setFloat("material.ao", cubeAO);
 
 	// shader settings
 	normalShader.use();
@@ -675,6 +681,7 @@ int main()
 			static float f = 0.0f;
 			static int counter = 0;
 
+			ImGui::SetNextWindowSize(ImVec2(300, 375));
 			ImGui::Begin("Settings");
 
 			ImGui::Checkbox("Show Outline", &showOutline);
@@ -713,9 +720,19 @@ int main()
 				ridingCube->SetPosition(ridingBoxPosition, ridingCube->GetPosition().y, ridingCube->GetPosition().z);
 			}
 
-			cameraPosition = camera.Position;
-			cameraZoom = camera.Zoom;
-			cameraFront = camera.Front;
+			if (ImGui::SliderFloat("Cube R", &cubeColor.x, 0.0f, 1.0f, "%0.01f") ||
+				ImGui::SliderFloat("Cube G", &cubeColor.y, 0.0f, 1.0f, "%0.01f") ||
+				ImGui::SliderFloat("Cube B", &cubeColor.z, 0.0f, 1.0f, "%0.01f") ||
+				ImGui::SliderFloat("Metallic", &cubeMetallic, 0.0f, 1.0f, "%0.01f") ||
+				ImGui::SliderFloat("Roughness", &cubeRoughness, 0.0f, 1.0f, "%0.01f"))
+			{
+				pbrShader.use();
+
+				pbrShader.setVec3("material.albedo", cubeColor);
+				pbrShader.setFloat("material.metallic", cubeMetallic);
+				pbrShader.setFloat("material.roughness", cubeRoughness);
+				pbrShader.setFloat("material.ao", cubeAO);
+			}
 
 			if (ImGui::SliderFloat("Camera X", &cameraPosition.x, -10.0f, 10.0f, "%.3f") ||
 				ImGui::SliderFloat("Camera Y", &cameraPosition.y, -10.0f, 10.0f, "%.3f") ||

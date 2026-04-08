@@ -29,22 +29,21 @@ public:
                    glm::vec3 color_ = glm::vec3(1.0f),
                    float intensity = 1.0f);
 
-    void Setup(Shader& shader, bool use = false);
+    void Setup(Shader &shader, bool use, float increase = 1);
 
-    void Update(Shader& shader, bool use = false);
-    void Update(std::vector<Shader>& shaders, bool use = false, int id_ = -1);
+    void Update(Shader &shader, bool use = false, float increase = 1);
+    void Update(std::vector<Shader> &shaders, bool use = false, int id_ = -1, float increase = 1);
 
 private:
     bool isShowing;
 };
 
-
 class SpotLight
 {
 public:
     int id;
-    glm::vec3  position;
-    glm::vec3  direction;
+    glm::vec3 position;
+    glm::vec3 direction;
     float cutOff;
     float outerCutOff;
 
@@ -57,27 +56,25 @@ public:
 
     bool shown;
 
-
     SpotLight(int id_ = 0,
-        float cutOff_ = glm::cos(glm::radians(15.5f)),
-        float outerCutOff_ = glm::cos(glm::radians(18.5f)),
-        glm::vec3 ambient_ = glm::vec3(0.0f),
-        glm::vec3 diffuse_ = glm::vec3(0.0f),
-        glm::vec3 specular_ = glm::vec3(0.0f),
-        glm::vec3 position_ = glm::vec3(0.0f),
-        glm::vec3 dir_ = glm::vec3(0.0f),
-        glm::vec3 color_ = glm::vec3(1.0f),
-        float intensity = 1.0f);
+              float cutOff_ = glm::cos(glm::radians(15.5f)),
+              float outerCutOff_ = glm::cos(glm::radians(18.5f)),
+              glm::vec3 ambient_ = glm::vec3(0.0f),
+              glm::vec3 diffuse_ = glm::vec3(0.0f),
+              glm::vec3 specular_ = glm::vec3(0.0f),
+              glm::vec3 position_ = glm::vec3(0.0f),
+              glm::vec3 dir_ = glm::vec3(0.0f),
+              glm::vec3 color_ = glm::vec3(1.0f),
+              float intensity = 1.0f);
 
-    void Setup(Shader& shader, bool use = false, int id_ = -1);
+    void Setup(Shader &shader, bool use = false, int id_ = -1, float increase = 1);
 
-    void Update(Shader& shader, bool use = false, int id_ = -1);
-    void Update(std::vector<Shader>& shaders, bool use = false, int id_ = -1);
+    void Update(Shader &shader, bool use = false, int id_ = -1, float increase = 1);
+    void Update(std::vector<Shader> &shaders, bool use = false, int id_ = -1, float increase = 1);
 
 private:
     bool isShowing;
 };
-
 
 class PointLight
 {
@@ -101,24 +98,24 @@ public:
     bool shown;
 
     PointLight(int id_ = 0,
-        float radius = -1.0f,
-        glm::vec3 ambient_ = glm::vec3(0.0f),
-        glm::vec3 diffuse_ = glm::vec3(0.0f),
-        glm::vec3 specular_ = glm::vec3(0.0f),
-        glm::vec3 position_ = glm::vec3(0.0f),
-        float constant_ = 1.0,
-        float linear_ = 0.0,
-        float quadratic_ = 0.0,
-        glm::vec3 color_ = glm::vec3(1.0f),
-        float intensity_ = 1.0f,
-        float radius_ = 0.0f);
+               float radius = -1.0f,
+               glm::vec3 ambient_ = glm::vec3(0.0f),
+               glm::vec3 diffuse_ = glm::vec3(0.0f),
+               glm::vec3 specular_ = glm::vec3(0.0f),
+               glm::vec3 position_ = glm::vec3(0.0f),
+               float constant_ = 1.0,
+               float linear_ = 0.0,
+               float quadratic_ = 0.0,
+               glm::vec3 color_ = glm::vec3(1.0f),
+               float intensity_ = 1.0f,
+               float radius_ = 0.0f);
 
     void UpdateRadius(float radius);
 
-    void Setup(Shader& shader, bool use = false, int id_ = -1);
+    void Setup(Shader &shader, bool use = false, int id_ = -1, float increase = 1);
 
-    void Update(Shader& shader, bool use = false, int id_ = -1);
-    void Update(std::vector<Shader>& shaders, bool use = false, int id_ = -1);
+    void Update(Shader &shader, bool use = false, int id_ = -1, float increase = 1);
+    void Update(std::vector<Shader> &shaders, bool use = false, int id_ = -1, float increase = 1);
 
 private:
     bool isShowing;

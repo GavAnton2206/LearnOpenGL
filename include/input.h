@@ -6,13 +6,15 @@
 #include <array>
 #include <unordered_map>
 
-enum InputEventType {
+enum InputEventType
+{
 	JUST_PRESSED,
 	JUST_RELEASED,
 	PRESSED
 };
 
-struct KeyState {
+struct KeyState
+{
 	bool current = false;
 	bool previous = false;
 
@@ -21,17 +23,21 @@ struct KeyState {
 	bool pressed() const;
 };
 
-struct ActionBinding {
+struct ActionBinding
+{
 	int key;
 	InputEventType type;
 
-	bool operator==(const ActionBinding& other) const;
+	bool operator==(const ActionBinding &other) const;
 };
 
-namespace std {
-	template<>
-	struct hash<ActionBinding> {
-		std::size_t operator()(const ActionBinding& a) const noexcept {
+namespace std
+{
+	template <>
+	struct hash<ActionBinding>
+	{
+		std::size_t operator()(const ActionBinding &a) const noexcept
+		{
 			std::size_t h1 = std::hash<int>{}(a.key);
 			std::size_t h2 = std::hash<int>{}(static_cast<int>(a.type));
 
@@ -40,12 +46,18 @@ namespace std {
 	};
 }
 
-class Input {
+class Input
+{
 public:
-	static void Process(GLFWwindow* window);
+	static void Setup();
+	static void Process(GLFWwindow *window);
 	static void BindAction(int key, InputEventType type, std::function<void()> callback);
+	static void ChangeLock();
 
 private:
 	static std::array<KeyState, GLFW_KEY_LAST + 1> keyStates;
 	static std::unordered_map<ActionBinding, std::function<void()>> actions;
+
+	const static int lockKey = GLFW_KEY_X;
+	static bool locked;
 };

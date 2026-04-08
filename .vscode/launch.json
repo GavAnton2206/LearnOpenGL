@@ -1,0 +1,25 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Debug (Windows)",
+			"type": "cppvsdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/build/Debug/LearnOpenGL.exe",
+			"args": [],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}",
+			"environment": [],
+			"preLaunchTask": "cmake-build",
+			"console": "externalTerminal"
+		},
+		{
+			"name": "Debug (macOS)",
+			"type": "lldb",
+			"request": "launch",
+			"program": "${workspaceFolder}/build/LearnOpenGL",
+			"args": [],
+			"cwd": "${workspaceFolder}"
+		}
+	]
+}
